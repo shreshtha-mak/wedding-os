@@ -1,0 +1,5 @@
+# One-off admin bootstrap scripts contain real family member PII (emails) —
+# never meant for version control, this repo is public.
+supabase/provision_*.sql
+
+.DS_Store
