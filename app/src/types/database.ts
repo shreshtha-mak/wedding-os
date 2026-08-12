@@ -247,6 +247,10 @@ export interface Database {
         Args: Record<PropertyKey, never>
         Returns: void
       }
+      link_user_account: {
+        Args: { target_person_id: string; target_email: string }
+        Returns: void
+      }
     }
   }
 }

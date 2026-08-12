@@ -4,6 +4,7 @@ import { useAuth } from '../features/auth/AuthContext'
 import { LoginPage } from '../features/auth/LoginPage'
 import { HomePage } from '../features/home/HomePage'
 import { TasksPage } from '../features/tasks/TasksPage'
+import { PeoplePage } from '../features/people/PeoplePage'
 import { AppLayout } from '../components/layout/AppLayout'
 
 export function AppRoutes() {
@@ -26,6 +27,7 @@ export function AppRoutes() {
       <Route element={<AppLayout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/tasks" element={<TasksPage />} />
+        <Route path="/people" element={<PeoplePage />} />
       </Route>
     </Routes>
   )

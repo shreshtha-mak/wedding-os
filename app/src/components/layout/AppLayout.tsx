@@ -1,10 +1,11 @@
 import { UnstyledButton, Text } from '@mantine/core'
-import { IconHome, IconListCheck } from '@tabler/icons-react'
+import { IconHome, IconListCheck, IconUsers } from '@tabler/icons-react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 
 const TABS = [
   { to: '/', label: 'Home', icon: IconHome },
   { to: '/tasks', label: 'Tasks', icon: IconListCheck },
+  { to: '/people', label: 'People', icon: IconUsers },
 ]
 
 export function AppLayout() {
