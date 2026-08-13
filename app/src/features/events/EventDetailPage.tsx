@@ -24,6 +24,12 @@ import { AddDecisionModal } from '../decisions/AddDecisionModal'
 import { useChallengesForEvent } from '../challenges/api'
 import { ChallengeItem } from '../challenges/ChallengeItem'
 import { AddChallengeModal } from '../challenges/AddChallengeModal'
+import { useOutfitsForEvent } from '../outfits/api'
+import { OutfitItem } from '../outfits/OutfitItem'
+import { AddOutfitModal } from '../outfits/AddOutfitModal'
+import { useThingsForEvent } from '../things/api'
+import { ThingItem } from '../things/ThingItem'
+import { AddThingModal } from '../things/AddThingModal'
 import { useEventTimeline } from './api'
 import { AddTimelineItemModal } from './AddTimelineItemModal'
 import { computeEventReadiness, readinessColor } from './readiness'
@@ -46,11 +52,15 @@ export function EventDetailPage() {
   const { data: timeline, isLoading: timelineLoading } = useEventTimeline(eventId)
   const { data: decisions, isLoading: decisionsLoading } = useDecisionsForEvent(eventId)
   const { data: challenges, isLoading: challengesLoading } = useChallengesForEvent(eventId)
+  const { data: outfits, isLoading: outfitsLoading } = useOutfitsForEvent(eventId)
+  const { data: things, isLoading: thingsLoading } = useThingsForEvent(eventId)
 
   const [addTaskOpen, setAddTaskOpen] = useState(false)
   const [addTimelineOpen, setAddTimelineOpen] = useState(false)
   const [addDecisionOpen, setAddDecisionOpen] = useState(false)
   const [addChallengeOpen, setAddChallengeOpen] = useState(false)
+  const [addOutfitOpen, setAddOutfitOpen] = useState(false)
+  const [addThingOpen, setAddThingOpen] = useState(false)
 
   if (eventsLoading) {
     return (
@@ -155,6 +165,52 @@ export function EventDetailPage() {
       {challenges?.map((c) => <ChallengeItem key={c.id} challenge={c} />)}
 
       <Group justify="space-between" mt="md">
+        <Title order={4}>
+          Outfits
+          {outfits && outfits.length > 0 && (
+            <Text span size="sm" c="dimmed">
+              {' '}
+              ({outfits.filter((o) => o.is_ready).length}/{outfits.length} ready)
+            </Text>
+          )}
+        </Title>
+        <ActionIcon variant="subtle" onClick={() => setAddOutfitOpen(true)} aria-label="Add outfit">
+          <IconPlus size={20} />
+        </ActionIcon>
+      </Group>
+      {outfitsLoading && (
+        <Center py="md">
+          <Loader size="sm" />
+        </Center>
+      )}
+      {!outfitsLoading && outfits?.length === 0 && (
+        <Text c="dimmed" size="sm">
+          No outfits tracked for this event yet.
+        </Text>
+      )}
+      {outfits?.map((o) => <OutfitItem key={o.id} outfit={o} label={o.person.name} />)}
+
+      <Group justify="space-between" mt="md">
+        <Title order={4}>Things to Take</Title>
+        {canManage && (
+          <ActionIcon variant="subtle" onClick={() => setAddThingOpen(true)} aria-label="Add thing to take">
+            <IconPlus size={20} />
+          </ActionIcon>
+        )}
+      </Group>
+      {thingsLoading && (
+        <Center py="md">
+          <Loader size="sm" />
+        </Center>
+      )}
+      {!thingsLoading && things?.length === 0 && (
+        <Text c="dimmed" size="sm">
+          Nothing on the list for this event yet.
+        </Text>
+      )}
+      {things?.map((t) => <ThingItem key={t.id} thing={t} />)}
+
+      <Group justify="space-between" mt="md">
         <Title order={4}>Timeline</Title>
         {canManage && (
           <ActionIcon variant="subtle" onClick={() => setAddTimelineOpen(true)} aria-label="Add timeline item">
@@ -205,6 +261,10 @@ export function EventDetailPage() {
           onClose={() => setAddDecisionOpen(false)}
           defaultEventId={event.id}
         />
+      )}
+      <AddOutfitModal opened={addOutfitOpen} onClose={() => setAddOutfitOpen(false)} defaultEventId={event.id} />
+      {canManage && (
+        <AddThingModal opened={addThingOpen} onClose={() => setAddThingOpen(false)} defaultEventId={event.id} />
       )}
       {canManage && (
         <AddChallengeModal

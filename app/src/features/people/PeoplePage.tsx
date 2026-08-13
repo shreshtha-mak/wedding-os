@@ -85,7 +85,7 @@ export function PeoplePage() {
 
   return (
     <Stack p="md" pb={96} gap="md">
-      <Title order={3}>People</Title>
+      <Title order={3}>Family</Title>
 
       {isLoading && (
         <Center py="xl">

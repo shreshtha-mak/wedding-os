@@ -8,6 +8,18 @@ export type TaskPriority = 'Low' | 'Medium' | 'High' | 'Critical'
 export type RoleId = 'admin' | 'organiser' | 'restricted'
 export type DecisionStatus = 'Pending' | 'Decided'
 export type ChallengeStatus = 'Open' | 'Being Resolved' | 'Resolved'
+export type AttendanceStatus = 'Pending' | 'Attending' | 'Not attending' | 'Maybe'
+export type TransportStatus = 'Needed' | 'Assigned' | 'Confirmed' | 'Completed'
+export type OutfitComponentStatus = 'Idea' | 'To Buy' | 'In Making' | 'In Alteration' | 'Ready'
+export type ThingStatus = 'Idea' | 'To Buy' | 'Bought' | 'To Prepare' | 'Packed' | 'At Venue' | 'Returned'
+export type DietaryRequirement =
+  | 'None'
+  | 'Vegetarian'
+  | 'Vegan'
+  | 'Jain'
+  | 'Gluten-free'
+  | 'Allergy'
+  | 'Other'
 export type TimelineItemType =
   | 'Event activity'
   | 'Vendor'
@@ -452,6 +464,382 @@ export interface Database {
           },
         ]
       }
+      guests: {
+        Row: {
+          id: string
+          wedding_id: string
+          person_id: string
+          family_group: string | null
+          dietary_requirements: string[]
+          dietary_notes: string | null
+          accommodation_required: boolean
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          wedding_id: string
+          person_id: string
+          family_group?: string | null
+          dietary_requirements?: string[]
+          dietary_notes?: string | null
+          accommodation_required?: boolean
+          notes?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['guests']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'guests_wedding_id_fkey'
+            columns: ['wedding_id']
+            isOneToOne: false
+            referencedRelation: 'weddings'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'guests_person_id_fkey'
+            columns: ['person_id']
+            isOneToOne: true
+            referencedRelation: 'people'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      guest_event_attendance: {
+        Row: {
+          id: string
+          guest_id: string
+          event_id: string
+          status: AttendanceStatus
+          num_attending: number
+          transportation_required: boolean
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          guest_id: string
+          event_id: string
+          status?: AttendanceStatus
+          num_attending?: number
+          transportation_required?: boolean
+          notes?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['guest_event_attendance']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'guest_event_attendance_guest_id_fkey'
+            columns: ['guest_id']
+            isOneToOne: false
+            referencedRelation: 'guests'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'guest_event_attendance_event_id_fkey'
+            columns: ['event_id']
+            isOneToOne: false
+            referencedRelation: 'events'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      accommodation_locations: {
+        Row: {
+          id: string
+          wedding_id: string
+          name: string
+          type: string | null
+          address: string | null
+          contact_person: string | null
+          phone: string | null
+          check_in_time: string | null
+          check_out_time: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          wedding_id: string
+          name: string
+          type?: string | null
+          address?: string | null
+          contact_person?: string | null
+          phone?: string | null
+          check_in_time?: string | null
+          check_out_time?: string | null
+          notes?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['accommodation_locations']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'accommodation_locations_wedding_id_fkey'
+            columns: ['wedding_id']
+            isOneToOne: false
+            referencedRelation: 'weddings'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      accommodation_rooms: {
+        Row: {
+          id: string
+          location_id: string
+          room_name: string
+          capacity: number
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          location_id: string
+          room_name: string
+          capacity?: number
+          notes?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['accommodation_rooms']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'accommodation_rooms_location_id_fkey'
+            columns: ['location_id']
+            isOneToOne: false
+            referencedRelation: 'accommodation_locations'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      accommodation_assignments: {
+        Row: {
+          id: string
+          room_id: string
+          guest_id: string
+          check_in: string | null
+          check_out: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          room_id: string
+          guest_id: string
+          check_in?: string | null
+          check_out?: string | null
+          notes?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['accommodation_assignments']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'accommodation_assignments_room_id_fkey'
+            columns: ['room_id']
+            isOneToOne: false
+            referencedRelation: 'accommodation_rooms'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'accommodation_assignments_guest_id_fkey'
+            columns: ['guest_id']
+            isOneToOne: false
+            referencedRelation: 'guests'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      transportation: {
+        Row: {
+          id: string
+          wedding_id: string
+          event_id: string | null
+          person_id: string | null
+          group_label: string | null
+          pickup_location: string | null
+          destination: string | null
+          transport_date: string | null
+          transport_time: string | null
+          responsible_person_id: string | null
+          driver: string | null
+          vehicle: string | null
+          num_passengers: number
+          status: TransportStatus
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          wedding_id: string
+          event_id?: string | null
+          person_id?: string | null
+          group_label?: string | null
+          pickup_location?: string | null
+          destination?: string | null
+          transport_date?: string | null
+          transport_time?: string | null
+          responsible_person_id?: string | null
+          driver?: string | null
+          vehicle?: string | null
+          num_passengers?: number
+          status?: TransportStatus
+          notes?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['transportation']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'transportation_wedding_id_fkey'
+            columns: ['wedding_id']
+            isOneToOne: false
+            referencedRelation: 'weddings'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'transportation_event_id_fkey'
+            columns: ['event_id']
+            isOneToOne: false
+            referencedRelation: 'events'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'transportation_person_id_fkey'
+            columns: ['person_id']
+            isOneToOne: false
+            referencedRelation: 'people'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'transportation_responsible_person_id_fkey'
+            columns: ['responsible_person_id']
+            isOneToOne: false
+            referencedRelation: 'people'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      outfits: {
+        Row: {
+          id: string
+          wedding_id: string
+          person_id: string
+          event_id: string
+          description: string | null
+          outfit_status: OutfitComponentStatus
+          shoes_status: OutfitComponentStatus
+          jewellery_status: OutfitComponentStatus
+          accessories_status: OutfitComponentStatus
+          is_ready: boolean
+          vendor_tailor: string | null
+          cost: number | null
+          ready_date: string | null
+          responsible_person_id: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          wedding_id: string
+          person_id: string
+          event_id: string
+          description?: string | null
+          outfit_status?: OutfitComponentStatus
+          shoes_status?: OutfitComponentStatus
+          jewellery_status?: OutfitComponentStatus
+          accessories_status?: OutfitComponentStatus
+          vendor_tailor?: string | null
+          cost?: number | null
+          ready_date?: string | null
+          responsible_person_id?: string | null
+          notes?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['outfits']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'outfits_wedding_id_fkey'
+            columns: ['wedding_id']
+            isOneToOne: false
+            referencedRelation: 'weddings'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'outfits_person_id_fkey'
+            columns: ['person_id']
+            isOneToOne: false
+            referencedRelation: 'people'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'outfits_event_id_fkey'
+            columns: ['event_id']
+            isOneToOne: false
+            referencedRelation: 'events'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'outfits_responsible_person_id_fkey'
+            columns: ['responsible_person_id']
+            isOneToOne: false
+            referencedRelation: 'people'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      things_to_take: {
+        Row: {
+          id: string
+          wedding_id: string
+          event_id: string | null
+          item_name: string
+          quantity: number
+          responsible_person_id: string | null
+          status: ThingStatus
+          purchase_required: boolean
+          cost: number | null
+          where_stored: string | null
+          notes: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          wedding_id: string
+          event_id?: string | null
+          item_name: string
+          quantity?: number
+          responsible_person_id?: string | null
+          status?: ThingStatus
+          purchase_required?: boolean
+          cost?: number | null
+          where_stored?: string | null
+          notes?: string | null
+          created_by?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['things_to_take']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'things_to_take_wedding_id_fkey'
+            columns: ['wedding_id']
+            isOneToOne: false
+            referencedRelation: 'weddings'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'things_to_take_event_id_fkey'
+            columns: ['event_id']
+            isOneToOne: false
+            referencedRelation: 'events'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'things_to_take_responsible_person_id_fkey'
+            columns: ['responsible_person_id']
+            isOneToOne: false
+            referencedRelation: 'people'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       activity_log: {
         Row: {
           id: string
@@ -520,3 +908,19 @@ export type Decision = Database['public']['Tables']['decisions']['Row']
 export type DecisionInsert = Database['public']['Tables']['decisions']['Insert']
 export type Challenge = Database['public']['Tables']['challenges']['Row']
 export type ChallengeInsert = Database['public']['Tables']['challenges']['Insert']
+export type Guest = Database['public']['Tables']['guests']['Row']
+export type GuestInsert = Database['public']['Tables']['guests']['Insert']
+export type GuestEventAttendance = Database['public']['Tables']['guest_event_attendance']['Row']
+export type GuestEventAttendanceInsert = Database['public']['Tables']['guest_event_attendance']['Insert']
+export type AccommodationLocation = Database['public']['Tables']['accommodation_locations']['Row']
+export type AccommodationLocationInsert = Database['public']['Tables']['accommodation_locations']['Insert']
+export type AccommodationRoom = Database['public']['Tables']['accommodation_rooms']['Row']
+export type AccommodationRoomInsert = Database['public']['Tables']['accommodation_rooms']['Insert']
+export type AccommodationAssignment = Database['public']['Tables']['accommodation_assignments']['Row']
+export type AccommodationAssignmentInsert = Database['public']['Tables']['accommodation_assignments']['Insert']
+export type Transportation = Database['public']['Tables']['transportation']['Row']
+export type TransportationInsert = Database['public']['Tables']['transportation']['Insert']
+export type Outfit = Database['public']['Tables']['outfits']['Row']
+export type OutfitInsert = Database['public']['Tables']['outfits']['Insert']
+export type ThingToTake = Database['public']['Tables']['things_to_take']['Row']
+export type ThingToTakeInsert = Database['public']['Tables']['things_to_take']['Insert']
