@@ -6,6 +6,14 @@
   src: url('/fonts/Inter-Variable.woff2') format('woff2');
 }
 
+@font-face {
+  font-family: 'DM Serif Display';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/DMSerifDisplay-Regular.woff2') format('woff2');
+}
+
 :root {
   color-scheme: light dark;
 }
@@ -26,4 +34,11 @@ body {
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Warm off-white page background, distinct from white Card/Paper surfaces
+   (--mantine-color-body drives Paper's own background, so it's deliberately
+   left untouched — overriding it here would flatten cards into the page). */
+[data-mantine-color-scheme='light'] body {
+  background-color: #f8f7f4;
 }

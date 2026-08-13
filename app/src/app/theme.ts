@@ -9,46 +9,52 @@ import {
   Select,
   Textarea,
   TextInput,
-  Title,
   createTheme,
   type MantineColorsTuple,
 } from '@mantine/core'
 import { DateInput, TimeInput } from '@mantine/dates'
 
-// Wedding OS — UI Design System v2: white + deep navy, high-contrast,
-// operational. Supersedes the earlier warm-neutral palette. Ramps below are
-// HSL-interpolated from the doc's named anchor colors so every existing
-// `color="green"`/`"red"`/`"yellow"`/`"blue"`/`"orange"`/`"gray"`/`"accent"`
-// call site picks up the new palette automatically — no per-file rewrite
-// needed for most of the shift. All pass WCAG AA (several AAA) against white.
-const navy: MantineColorsTuple = [
-  '#F5F7FA', '#E9EEF4', '#CFDAE6', '#7CA2CB', '#316AA9',
-  '#12345B', '#0B1F3A', '#091A31', '#071427', '#050F1E',
+// Wedding OS — UI Design System v1: calm, warm-neutral, editorial. Ramps
+// below are HSL-interpolated from the doc's named anchor colors so every
+// existing `color="green"`/`"red"`/`"yellow"`/`"blue"`/`"orange"`/`"gray"`
+// call site (status badges, dots, borders, dimmed text) picks up the muted
+// palette automatically — no per-file changes needed for ~80% of the visual
+// shift. `accent` (#8A6F5A) is new and becomes primaryColor.
+const accent: MantineColorsTuple = [
+  '#F6F5F4', '#E9E5E2', '#D7D0CB', '#C2B6AD', '#AE9C8E',
+  '#9C8572', '#8A6F5A', '#6D5645', '#514033', '#362A21',
 ]
-const blueGray: MantineColorsTuple = [
-  '#FBFCFD', '#F4F7FA', '#EBF0F5', '#D7E0EA', '#B7C3D1',
-  '#7E91A8', '#526173', '#3C4B5F', '#283648', '#17212F',
+const warmGray: MantineColorsTuple = [
+  '#FBFAF8', '#F8F7F4', '#F0EEE9', '#E7E3DD', '#C3BCB3',
+  '#9A958E', '#86817A', '#706C67', '#4B4744', '#252321',
 ]
-// Success (Ready/Complete/Confirmed/Paid) — dark, high-contrast green.
+// Success (Ready/Complete/Confirmed/Paid) — muted sage, not traffic-light green.
 const success: MantineColorsTuple = [
-  '#F1F8F4', '#E0F0E7', '#CFE8DA', '#9AD5B5', '#60C791',
-  '#33AD6E', '#1E7A4C', '#19653F', '#134F32', '#0E3A25',
+  '#F4F6F4', '#E3E8E4', '#CDD5CE', '#B0BFB3', '#93A997',
+  '#79957E', '#6B8F71', '#537058', '#3D5441', '#28372A',
 ]
-// Warning (Needs Attention/Due Soon/Pending) — dark amber.
+// Warning (Needs Attention/Due Soon/Pending) — muted amber.
 const warning: MantineColorsTuple = [
-  '#FBF5EB', '#F6E9D1', '#F0DEB8', '#E7C37D', '#E1A740',
-  '#C3841A', '#8A5A0F', '#754B0D', '#5F3D0A', '#4A2F08',
+  '#F7F5F2', '#EDE7DE', '#DFD3C3', '#D0BBA0', '#C1A37B',
+  '#B68E59', '#BC8A46', '#966C33', '#715124', '#4B3517',
 ]
-// Error/Critical (Blocker/Overdue/Missing) — dark red, not stop-sign red.
+// Critical (Blocker/Overdue/At Risk/Missing) — muted terracotta, not stop-sign red.
 const critical: MantineColorsTuple = [
-  '#FBEFEE', '#F5DCD9', '#EFC9C5', '#E39C96', '#D86E65',
-  '#CD3F34', '#A02D26', '#85251F', '#6A1D19', '#4F1512',
+  '#F7F3F2', '#ECE1DF', '#DEC8C4', '#CDA7A2', '#BD877F',
+  '#B1685E', '#B4574A', '#8E4238', '#6B3028', '#471F19',
 ]
-// "At risk" — a distinct middle severity between warning and critical for
-// the 4-tier readiness system (healthy/needs_attention/at_risk/blocked).
+// Informational (Draft/Pending/Confirmed-neutral) — muted slate, distinct from accent
+// so the accent stays reserved for interactive emphasis (spec: "do not use
+// the accent colour everywhere").
+const info: MantineColorsTuple = [
+  '#F4F5F6', '#E2E6E9', '#CBD2D7', '#ADB9C2', '#8FA1AD',
+  '#738A9B', '#6E8A9E', '#536C7E', '#3D515F', '#27353F',
+]
+// "At risk" — a distinct middle severity between warning and critical, used
+// by the readiness level system.
 const atRisk: MantineColorsTuple = [
-  '#FBF1E9', '#F6E1CF', '#F0D3B6', '#E6B585', '#DD9653',
-  '#CD7828', '#9C5A1E', '#824B18', '#683B13', '#4E2C0E',
+  '#F8F4F2', '#EDE5DE', '#E0CFC2', '#D1B59E', '#C49A79',
+  '#B98256', '#C07A42', '#995F30', '#744622', '#4D2E15',
 ]
 
 const fontFamily = "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
@@ -59,35 +65,37 @@ export const theme = createTheme({
   fontFamily,
   fontFamilyMonospace: "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace",
   defaultRadius: 'md',
-  black: '#17212F',
+  black: '#252321',
   white: '#FFFFFF',
   colors: {
-    accent: navy,
-    gray: blueGray,
+    accent,
+    gray: warmGray,
     green: success,
     yellow: warning,
     red: critical,
+    blue: info,
     orange: atRisk,
-    // Info deliberately reuses the navy family rather than introducing a
-    // second blue hue (spec: "the primary navy family should remain dominant").
-    blue: navy,
   },
+  // 8px system: xs/sm/md/lg/xl map directly onto the doc's allowed values.
   spacing: { xs: '4px', sm: '8px', md: '16px', lg: '24px', xl: '32px' },
   radius: { xs: '4px', sm: '8px', md: '12px', lg: '16px', xl: '24px' },
-  // Shadows reserved for genuinely elevated surfaces (dialogs, dropdowns,
-  // sheets) — resting cards are distinguished by border + white, not shadow.
+  // Near-flat by default — shadows reserved for genuinely elevated surfaces
+  // (modal, dropdown, popover), never resting cards.
   shadows: {
-    xs: '0 1px 2px rgba(23, 33, 47, 0.05)',
-    sm: '0 2px 8px rgba(23, 33, 47, 0.06)',
-    md: '0 6px 20px rgba(23, 33, 47, 0.10)',
-    lg: '0 10px 28px rgba(23, 33, 47, 0.12)',
-    xl: '0 16px 40px rgba(23, 33, 47, 0.14)',
+    xs: '0 1px 2px rgba(37, 35, 33, 0.04)',
+    sm: '0 2px 8px rgba(37, 35, 33, 0.05)',
+    md: '0 6px 20px rgba(37, 35, 33, 0.08)',
+    lg: '0 10px 28px rgba(37, 35, 33, 0.10)',
+    xl: '0 16px 40px rgba(37, 35, 33, 0.12)',
   },
   headings: {
+    // Sans by default everywhere — the serif (DM Serif Display) is reserved
+    // for the few deliberately expressive moments (wedding title, countdown)
+    // and applied directly there, not through the heading scale.
     fontFamily,
     sizes: {
-      h1: { fontSize: '28px', fontWeight: '700', lineHeight: '1.2' },
-      h2: { fontSize: '22px', fontWeight: '700', lineHeight: '1.25' },
+      h1: { fontSize: '28px', fontWeight: '500', lineHeight: '1.2' },
+      h2: { fontSize: '22px', fontWeight: '500', lineHeight: '1.25' },
       h3: { fontSize: '17px', fontWeight: '600', lineHeight: '1.3' },
       h4: { fontSize: '15px', fontWeight: '600', lineHeight: '1.3' },
       h5: { fontSize: '13px', fontWeight: '600', lineHeight: '1.35' },
@@ -95,14 +103,11 @@ export const theme = createTheme({
     },
   },
   components: {
-    // Headings get the navy tier (§14: "Major headings... #0B1F3A"), distinct
-    // from the darker blue-grey used for ordinary body text.
-    Title: Title.extend({ defaultProps: { c: 'accent.6' } }),
     Card: Card.extend({ defaultProps: { radius: 'md', withBorder: true, shadow: 'none', bg: 'white' } }),
     Button: Button.extend({ defaultProps: { radius: 'sm', size: 'md' } }),
     ActionIcon: ActionIcon.extend({ defaultProps: { radius: 'sm' } }),
     Badge: Badge.extend({ defaultProps: { radius: 'xl' } }),
-    Modal: Modal.extend({ defaultProps: { radius: 'lg', shadow: 'lg', padding: 'lg' } }),
+    Modal: Modal.extend({ defaultProps: { radius: 'md', shadow: 'lg', padding: 'lg' } }),
     TextInput: TextInput.extend({ defaultProps: { radius: 'sm', size: 'md' } }),
     Textarea: Textarea.extend({ defaultProps: { radius: 'sm', size: 'md' } }),
     NumberInput: NumberInput.extend({ defaultProps: { radius: 'sm', size: 'md' } }),

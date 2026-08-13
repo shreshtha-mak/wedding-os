@@ -77,7 +77,7 @@ export function MyProfilePage() {
         </Text>
       )}
 
-      <Button variant="subtle" color="gray" onClick={() => signOut()} mt="md">
+      <Button variant="subtle" color="red" onClick={() => signOut()} mt="md">
         Sign out
       </Button>
     </Stack>

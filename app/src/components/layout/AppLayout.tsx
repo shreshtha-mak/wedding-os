@@ -29,9 +29,7 @@ export function AppLayout() {
           style={{
             padding: '6px 12px',
             textAlign: 'center',
-            background: 'var(--mantine-color-gray-1)',
-            color: 'var(--mantine-color-accent-6)',
-            fontWeight: 600,
+            background: 'var(--mantine-color-yellow-light)',
             fontSize: 13,
           }}
         >
