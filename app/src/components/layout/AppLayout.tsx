@@ -1,9 +1,10 @@
 import { UnstyledButton, Text } from '@mantine/core'
-import { IconHome, IconListCheck, IconUsers } from '@tabler/icons-react'
+import { IconCalendarEvent, IconHome, IconListCheck, IconUsers } from '@tabler/icons-react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 
 const TABS = [
   { to: '/', label: 'Home', icon: IconHome },
+  { to: '/events', label: 'Events', icon: IconCalendarEvent },
   { to: '/tasks', label: 'Tasks', icon: IconListCheck },
   { to: '/people', label: 'People', icon: IconUsers },
 ]
@@ -30,7 +31,7 @@ export function AppLayout() {
         }}
       >
         {TABS.map(({ to, label, icon: Icon }) => {
-          const active = location.pathname === to
+          const active = to === '/' ? location.pathname === '/' : location.pathname.startsWith(to)
           return (
             <UnstyledButton
               key={to}

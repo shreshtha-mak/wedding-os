@@ -6,6 +6,20 @@
 export type TaskStatus = 'Not Started' | 'In Progress' | 'Blocked' | 'Completed'
 export type TaskPriority = 'Low' | 'Medium' | 'High' | 'Critical'
 export type RoleId = 'admin' | 'organiser' | 'restricted'
+export type TimelineItemType =
+  | 'Event activity'
+  | 'Vendor'
+  | 'Setup'
+  | 'Family'
+  | 'Guest'
+  | 'Food'
+  | 'Ceremony'
+  | 'Performance'
+  | 'Photography'
+  | 'Transport'
+  | 'Packing'
+  | 'Payment'
+  | 'Other'
 
 export interface Database {
   public: {
@@ -240,6 +254,58 @@ export interface Database {
           },
         ]
       }
+      timeline_items: {
+        Row: {
+          id: string
+          wedding_id: string
+          event_id: string
+          activity: string
+          type: TimelineItemType
+          start_time: string | null
+          end_time: string | null
+          location: string | null
+          responsible_person_id: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          wedding_id: string
+          event_id: string
+          activity: string
+          type?: TimelineItemType
+          start_time?: string | null
+          end_time?: string | null
+          location?: string | null
+          responsible_person_id?: string | null
+          notes?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['timeline_items']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'timeline_items_wedding_id_fkey'
+            columns: ['wedding_id']
+            isOneToOne: false
+            referencedRelation: 'weddings'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'timeline_items_event_id_fkey'
+            columns: ['event_id']
+            isOneToOne: false
+            referencedRelation: 'events'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'timeline_items_responsible_person_id_fkey'
+            columns: ['responsible_person_id']
+            isOneToOne: false
+            referencedRelation: 'people'
+            referencedColumns: ['id']
+          },
+        ]
+      }
     }
     Views: Record<string, never>
     Functions: {
@@ -262,3 +328,5 @@ export type UserAccount = Database['public']['Tables']['user_accounts']['Row']
 export type TaskCategory = Database['public']['Tables']['task_categories']['Row']
 export type Task = Database['public']['Tables']['tasks']['Row']
 export type TaskInsert = Database['public']['Tables']['tasks']['Insert']
+export type TimelineItem = Database['public']['Tables']['timeline_items']['Row']
+export type TimelineItemInsert = Database['public']['Tables']['timeline_items']['Insert']

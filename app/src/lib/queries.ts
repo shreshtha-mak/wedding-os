@@ -32,7 +32,11 @@ export function useEvents() {
   return useQuery({
     queryKey: ['events'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('events').select('*').order('event_date')
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .order('event_date')
+        .order('start_time', { ascending: true, nullsFirst: false })
       if (error) throw error
       return data as EventRow[]
     },

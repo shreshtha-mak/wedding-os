@@ -36,6 +36,22 @@ export function useTasks(scope: 'all' | 'mine', personId: string | undefined) {
   })
 }
 
+export function useTasksForEvent(eventId: string | undefined) {
+  return useQuery({
+    queryKey: ['tasks', 'event', eventId],
+    enabled: !!eventId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tasks')
+        .select(TASK_SELECT)
+        .eq('event_id', eventId as string)
+        .order('due_date', { ascending: true, nullsFirst: false })
+      if (error) throw error
+      return data as unknown as TaskWithRelations[]
+    },
+  })
+}
+
 export function useCreateTask() {
   const queryClient = useQueryClient()
   return useMutation({

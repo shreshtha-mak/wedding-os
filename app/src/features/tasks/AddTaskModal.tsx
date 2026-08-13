@@ -17,7 +17,17 @@ import { useCreateTask } from './api'
 import { useEvents, usePeople, useTaskCategories } from '../../lib/queries'
 import type { TaskPriority } from '../../types/database'
 
-export function AddTaskModal({ opened, onClose }: { opened: boolean; onClose: () => void }) {
+export function AddTaskModal({
+  opened,
+  onClose,
+  defaultEventId,
+}: {
+  opened: boolean
+  onClose: () => void
+  // Preserves context when adding a task from inside an event's page,
+  // instead of making the user re-pick the event they're already looking at.
+  defaultEventId?: string
+}) {
   const { person } = useAuth()
   const { data: people } = usePeople()
   const { data: events } = useEvents()
@@ -27,9 +37,9 @@ export function AddTaskModal({ opened, onClose }: { opened: boolean; onClose: ()
   const [name, setName] = useState('')
   const [assignedPersonId, setAssignedPersonId] = useState<string | null>(null)
   const [dueDate, setDueDate] = useState<string | null>(null)
-  const [showMore, setShowMore] = useState(false)
+  const [showMore, setShowMore] = useState(!!defaultEventId)
   const [description, setDescription] = useState('')
-  const [eventId, setEventId] = useState<string | null>(null)
+  const [eventId, setEventId] = useState<string | null>(defaultEventId ?? null)
   const [categoryId, setCategoryId] = useState<string | null>(null)
   const [priority, setPriority] = useState<TaskPriority>('Medium')
 
@@ -37,9 +47,9 @@ export function AddTaskModal({ opened, onClose }: { opened: boolean; onClose: ()
     setName('')
     setAssignedPersonId(null)
     setDueDate(null)
-    setShowMore(false)
+    setShowMore(!!defaultEventId)
     setDescription('')
-    setEventId(null)
+    setEventId(defaultEventId ?? null)
     setCategoryId(null)
     setPriority('Medium')
   }

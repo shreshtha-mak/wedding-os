@@ -5,6 +5,8 @@ import { LoginPage } from '../features/auth/LoginPage'
 import { HomePage } from '../features/home/HomePage'
 import { TasksPage } from '../features/tasks/TasksPage'
 import { PeoplePage } from '../features/people/PeoplePage'
+import { EventsPage } from '../features/events/EventsPage'
+import { EventDetailPage } from '../features/events/EventDetailPage'
 import { AppLayout } from '../components/layout/AppLayout'
 
 export function AppRoutes() {
@@ -26,6 +28,8 @@ export function AppRoutes() {
     <Routes>
       <Route element={<AppLayout />}>
         <Route path="/" element={<HomePage />} />
+        <Route path="/events" element={<EventsPage />} />
+        <Route path="/events/:eventId" element={<EventDetailPage />} />
         <Route path="/tasks" element={<TasksPage />} />
         <Route path="/people" element={<PeoplePage />} />
       </Route>

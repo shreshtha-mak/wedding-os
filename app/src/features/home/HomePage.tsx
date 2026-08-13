@@ -1,5 +1,6 @@
-import { Badge, Card, Center, Group, Loader, Stack, Text, Title } from '@mantine/core'
+import { Badge, Card, Center, Group, Loader, Stack, Text, Title, UnstyledButton } from '@mantine/core'
 import dayjs from 'dayjs'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useTasks } from '../tasks/api'
 import { dueIndicator, dueIndicatorColor } from '../tasks/taskStatus'
@@ -28,6 +29,7 @@ function Countdown({ startDate, name }: { startDate: string | null; name: string
 }
 
 function UpcomingEvents() {
+  const navigate = useNavigate()
   const { data: events, isLoading } = useEvents()
   const upcoming = events?.filter((e) => !dayjs(e.event_date).isBefore(dayjs(), 'day')).slice(0, 3)
 
@@ -48,17 +50,19 @@ function UpcomingEvents() {
       )}
       <Stack gap="xs">
         {upcoming?.map((e) => (
-          <Group key={e.id} justify="space-between" wrap="nowrap">
-            <div>
-              <Text fw={500}>{e.name}</Text>
-              <Text size="xs" c="dimmed">
-                {e.day_label} · {e.location}
+          <UnstyledButton key={e.id} onClick={() => navigate(`/events/${e.id}`)}>
+            <Group justify="space-between" wrap="nowrap">
+              <div>
+                <Text fw={500}>{e.name}</Text>
+                <Text size="xs" c="dimmed">
+                  {e.day_label} · {e.location}
+                </Text>
+              </div>
+              <Text size="sm" c="dimmed">
+                {dayjs(e.event_date).format('DD MMM')}
               </Text>
-            </div>
-            <Text size="sm" c="dimmed">
-              {dayjs(e.event_date).format('DD MMM')}
-            </Text>
-          </Group>
+            </Group>
+          </UnstyledButton>
         ))}
       </Stack>
     </Card>
