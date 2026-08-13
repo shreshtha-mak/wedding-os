@@ -51,13 +51,15 @@ export function TasksPage() {
 
       {tasks?.map((task) => <TaskItem key={task.id} task={task} />)}
 
-      <Affix position={{ bottom: 24, right: 24 }}>
-        <ActionIcon size={56} radius="xl" onClick={() => setAddOpen(true)} aria-label="Add task">
-          <IconPlus size={26} />
-        </ActionIcon>
-      </Affix>
+      {canSeeAll && (
+        <Affix position={{ bottom: 24, right: 24 }}>
+          <ActionIcon size={56} radius="xl" onClick={() => setAddOpen(true)} aria-label="Add task">
+            <IconPlus size={26} />
+          </ActionIcon>
+        </Affix>
+      )}
 
-      <AddTaskModal opened={addOpen} onClose={() => setAddOpen(false)} />
+      {canSeeAll && <AddTaskModal opened={addOpen} onClose={() => setAddOpen(false)} />}
     </Stack>
   )
 }

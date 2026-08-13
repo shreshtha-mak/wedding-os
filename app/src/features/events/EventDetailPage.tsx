@@ -18,6 +18,12 @@ import { useEvents } from '../../lib/queries'
 import { useTasksForEvent } from '../tasks/api'
 import { TaskItem } from '../tasks/TaskItem'
 import { AddTaskModal } from '../tasks/AddTaskModal'
+import { useDecisionsForEvent } from '../decisions/api'
+import { DecisionItem } from '../decisions/DecisionItem'
+import { AddDecisionModal } from '../decisions/AddDecisionModal'
+import { useChallengesForEvent } from '../challenges/api'
+import { ChallengeItem } from '../challenges/ChallengeItem'
+import { AddChallengeModal } from '../challenges/AddChallengeModal'
 import { useEventTimeline } from './api'
 import { AddTimelineItemModal } from './AddTimelineItemModal'
 import { computeEventReadiness, readinessColor } from './readiness'
@@ -38,9 +44,13 @@ export function EventDetailPage() {
 
   const { data: tasks, isLoading: tasksLoading } = useTasksForEvent(eventId)
   const { data: timeline, isLoading: timelineLoading } = useEventTimeline(eventId)
+  const { data: decisions, isLoading: decisionsLoading } = useDecisionsForEvent(eventId)
+  const { data: challenges, isLoading: challengesLoading } = useChallengesForEvent(eventId)
 
   const [addTaskOpen, setAddTaskOpen] = useState(false)
   const [addTimelineOpen, setAddTimelineOpen] = useState(false)
+  const [addDecisionOpen, setAddDecisionOpen] = useState(false)
+  const [addChallengeOpen, setAddChallengeOpen] = useState(false)
 
   if (eventsLoading) {
     return (
@@ -86,9 +96,11 @@ export function EventDetailPage() {
 
       <Group justify="space-between">
         <Title order={4}>Tasks</Title>
-        <ActionIcon variant="subtle" onClick={() => setAddTaskOpen(true)} aria-label="Add task">
-          <IconPlus size={20} />
-        </ActionIcon>
+        {canManage && (
+          <ActionIcon variant="subtle" onClick={() => setAddTaskOpen(true)} aria-label="Add task">
+            <IconPlus size={20} />
+          </ActionIcon>
+        )}
       </Group>
       {tasksLoading && (
         <Center py="md">
@@ -101,6 +113,46 @@ export function EventDetailPage() {
         </Text>
       )}
       {tasks?.map((task) => <TaskItem key={task.id} task={task} />)}
+
+      <Group justify="space-between" mt="md">
+        <Title order={4}>Decisions</Title>
+        {canManage && (
+          <ActionIcon variant="subtle" onClick={() => setAddDecisionOpen(true)} aria-label="Add decision">
+            <IconPlus size={20} />
+          </ActionIcon>
+        )}
+      </Group>
+      {decisionsLoading && (
+        <Center py="md">
+          <Loader size="sm" />
+        </Center>
+      )}
+      {!decisionsLoading && decisions?.length === 0 && (
+        <Text c="dimmed" size="sm">
+          No decisions for this event yet.
+        </Text>
+      )}
+      {decisions?.map((d) => <DecisionItem key={d.id} decision={d} />)}
+
+      <Group justify="space-between" mt="md">
+        <Title order={4}>Challenges</Title>
+        {canManage && (
+          <ActionIcon variant="subtle" onClick={() => setAddChallengeOpen(true)} aria-label="Add challenge">
+            <IconPlus size={20} />
+          </ActionIcon>
+        )}
+      </Group>
+      {challengesLoading && (
+        <Center py="md">
+          <Loader size="sm" />
+        </Center>
+      )}
+      {!challengesLoading && challenges?.length === 0 && (
+        <Text c="dimmed" size="sm">
+          No open challenges 🎉
+        </Text>
+      )}
+      {challenges?.map((c) => <ChallengeItem key={c.id} challenge={c} />)}
 
       <Group justify="space-between" mt="md">
         <Title order={4}>Timeline</Title>
@@ -144,7 +196,23 @@ export function EventDetailPage() {
         ))}
       </Stack>
 
-      <AddTaskModal opened={addTaskOpen} onClose={() => setAddTaskOpen(false)} defaultEventId={event.id} />
+      {canManage && (
+        <AddTaskModal opened={addTaskOpen} onClose={() => setAddTaskOpen(false)} defaultEventId={event.id} />
+      )}
+      {canManage && (
+        <AddDecisionModal
+          opened={addDecisionOpen}
+          onClose={() => setAddDecisionOpen(false)}
+          defaultEventId={event.id}
+        />
+      )}
+      {canManage && (
+        <AddChallengeModal
+          opened={addChallengeOpen}
+          onClose={() => setAddChallengeOpen(false)}
+          defaultEventId={event.id}
+        />
+      )}
       {canManage && (
         <AddTimelineItemModal
           eventId={event.id}

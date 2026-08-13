@@ -1,11 +1,11 @@
 import { UnstyledButton, Text } from '@mantine/core'
-import { IconCalendarEvent, IconHome, IconListCheck, IconUsers } from '@tabler/icons-react'
+import { IconCalendarEvent, IconClipboardList, IconHome, IconUsers } from '@tabler/icons-react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 
 const TABS = [
   { to: '/', label: 'Home', icon: IconHome },
   { to: '/events', label: 'Events', icon: IconCalendarEvent },
-  { to: '/tasks', label: 'Tasks', icon: IconListCheck },
+  { to: '/planning', label: 'Planning', icon: IconClipboardList },
   { to: '/people', label: 'People', icon: IconUsers },
 ]
 

@@ -6,6 +6,8 @@
 export type TaskStatus = 'Not Started' | 'In Progress' | 'Blocked' | 'Completed'
 export type TaskPriority = 'Low' | 'Medium' | 'High' | 'Critical'
 export type RoleId = 'admin' | 'organiser' | 'restricted'
+export type DecisionStatus = 'Pending' | 'Decided'
+export type ChallengeStatus = 'Open' | 'Being Resolved' | 'Resolved'
 export type TimelineItemType =
   | 'Event activity'
   | 'Vendor'
@@ -306,6 +308,150 @@ export interface Database {
           },
         ]
       }
+      decisions: {
+        Row: {
+          id: string
+          wedding_id: string
+          event_id: string | null
+          category_id: string | null
+          question: string
+          options: string[]
+          responsible_person_id: string | null
+          deadline: string | null
+          status: DecisionStatus
+          selected_option: string | null
+          decided_by_person_ids: string[]
+          decided_date: string | null
+          notes: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          wedding_id: string
+          event_id?: string | null
+          category_id?: string | null
+          question: string
+          options?: string[]
+          responsible_person_id?: string | null
+          deadline?: string | null
+          status?: DecisionStatus
+          selected_option?: string | null
+          decided_by_person_ids?: string[]
+          decided_date?: string | null
+          notes?: string | null
+          created_by?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['decisions']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'decisions_wedding_id_fkey'
+            columns: ['wedding_id']
+            isOneToOne: false
+            referencedRelation: 'weddings'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'decisions_event_id_fkey'
+            columns: ['event_id']
+            isOneToOne: false
+            referencedRelation: 'events'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'decisions_category_id_fkey'
+            columns: ['category_id']
+            isOneToOne: false
+            referencedRelation: 'task_categories'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'decisions_responsible_person_id_fkey'
+            columns: ['responsible_person_id']
+            isOneToOne: false
+            referencedRelation: 'people'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      challenges: {
+        Row: {
+          id: string
+          wedding_id: string
+          event_id: string | null
+          category_id: string | null
+          title: string
+          description: string | null
+          owner_person_id: string | null
+          priority: TaskPriority
+          date_identified: string
+          deadline: string | null
+          status: ChallengeStatus
+          resolution: string | null
+          related_task_id: string | null
+          resolved_at: string | null
+          notes: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          wedding_id: string
+          event_id?: string | null
+          category_id?: string | null
+          title: string
+          description?: string | null
+          owner_person_id?: string | null
+          priority?: TaskPriority
+          date_identified?: string
+          deadline?: string | null
+          status?: ChallengeStatus
+          resolution?: string | null
+          related_task_id?: string | null
+          notes?: string | null
+          created_by?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['challenges']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'challenges_wedding_id_fkey'
+            columns: ['wedding_id']
+            isOneToOne: false
+            referencedRelation: 'weddings'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'challenges_event_id_fkey'
+            columns: ['event_id']
+            isOneToOne: false
+            referencedRelation: 'events'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'challenges_category_id_fkey'
+            columns: ['category_id']
+            isOneToOne: false
+            referencedRelation: 'task_categories'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'challenges_owner_person_id_fkey'
+            columns: ['owner_person_id']
+            isOneToOne: false
+            referencedRelation: 'people'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'challenges_related_task_id_fkey'
+            columns: ['related_task_id']
+            isOneToOne: false
+            referencedRelation: 'tasks'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       activity_log: {
         Row: {
           id: string
@@ -370,3 +516,7 @@ export type TaskInsert = Database['public']['Tables']['tasks']['Insert']
 export type TimelineItem = Database['public']['Tables']['timeline_items']['Row']
 export type TimelineItemInsert = Database['public']['Tables']['timeline_items']['Insert']
 export type ActivityLogEntry = Database['public']['Tables']['activity_log']['Row']
+export type Decision = Database['public']['Tables']['decisions']['Row']
+export type DecisionInsert = Database['public']['Tables']['decisions']['Insert']
+export type Challenge = Database['public']['Tables']['challenges']['Row']
+export type ChallengeInsert = Database['public']['Tables']['challenges']['Insert']

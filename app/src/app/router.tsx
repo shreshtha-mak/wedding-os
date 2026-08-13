@@ -3,7 +3,7 @@ import { Route, Routes } from 'react-router-dom'
 import { useAuth } from '../features/auth/AuthContext'
 import { LoginPage } from '../features/auth/LoginPage'
 import { HomePage } from '../features/home/HomePage'
-import { TasksPage } from '../features/tasks/TasksPage'
+import { PlanningPage } from '../features/planning/PlanningPage'
 import { PeoplePage } from '../features/people/PeoplePage'
 import { EventsPage } from '../features/events/EventsPage'
 import { EventDetailPage } from '../features/events/EventDetailPage'
@@ -30,7 +30,7 @@ export function AppRoutes() {
         <Route path="/" element={<HomePage />} />
         <Route path="/events" element={<EventsPage />} />
         <Route path="/events/:eventId" element={<EventDetailPage />} />
-        <Route path="/tasks" element={<TasksPage />} />
+        <Route path="/planning" element={<PlanningPage />} />
         <Route path="/people" element={<PeoplePage />} />
       </Route>
     </Routes>
