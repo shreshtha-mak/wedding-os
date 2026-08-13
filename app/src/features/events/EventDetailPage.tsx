@@ -9,6 +9,7 @@ import {
   Stack,
   Text,
   Title,
+  UnstyledButton,
 } from '@mantine/core'
 import { IconArrowLeft, IconPlus } from '@tabler/icons-react'
 import dayjs from 'dayjs'
@@ -30,6 +31,10 @@ import { AddOutfitModal } from '../outfits/AddOutfitModal'
 import { useThingsForEvent } from '../things/api'
 import { ThingItem } from '../things/ThingItem'
 import { AddThingModal } from '../things/AddThingModal'
+import { useVendors } from '../vendors/api'
+import { AssignVendorToEventModal } from '../vendors/AssignVendorToEventModal'
+import { useMenuForEvent } from '../menus/api'
+import { MenuDetailModal } from '../menus/MenuDetailModal'
 import { useEventTimeline } from './api'
 import { AddTimelineItemModal } from './AddTimelineItemModal'
 import { computeEventReadiness, readinessColor } from './readiness'
@@ -54,6 +59,8 @@ export function EventDetailPage() {
   const { data: challenges, isLoading: challengesLoading } = useChallengesForEvent(eventId)
   const { data: outfits, isLoading: outfitsLoading } = useOutfitsForEvent(eventId)
   const { data: things, isLoading: thingsLoading } = useThingsForEvent(eventId)
+  const { data: allVendors, isLoading: vendorsLoading } = useVendors()
+  const { data: menu } = useMenuForEvent(canManage ? eventId : undefined)
 
   const [addTaskOpen, setAddTaskOpen] = useState(false)
   const [addTimelineOpen, setAddTimelineOpen] = useState(false)
@@ -61,6 +68,11 @@ export function EventDetailPage() {
   const [addChallengeOpen, setAddChallengeOpen] = useState(false)
   const [addOutfitOpen, setAddOutfitOpen] = useState(false)
   const [addThingOpen, setAddThingOpen] = useState(false)
+  const [addVendorOpen, setAddVendorOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  const eventVendorAssignments = allVendors
+    ?.flatMap((v) => v.assignments.filter((a) => a.event_id === eventId).map((a) => ({ ...a, vendorName: v.name })))
 
   if (eventsLoading) {
     return (
@@ -210,6 +222,55 @@ export function EventDetailPage() {
       )}
       {things?.map((t) => <ThingItem key={t.id} thing={t} />)}
 
+      {canManage && (
+        <>
+          <Group justify="space-between" mt="md">
+            <Title order={4}>Menu</Title>
+          </Group>
+          <UnstyledButton onClick={() => setMenuOpen(true)}>
+            <Badge
+              color={menu?.status === 'Finalised' ? 'green' : menu?.status === 'Discussing' ? 'yellow' : 'gray'}
+              variant="light"
+            >
+              {menu?.status ?? 'Not started'}
+            </Badge>
+          </UnstyledButton>
+
+          <Group justify="space-between" mt="md">
+            <Title order={4}>Vendors</Title>
+            <ActionIcon variant="subtle" onClick={() => setAddVendorOpen(true)} aria-label="Assign vendor">
+              <IconPlus size={20} />
+            </ActionIcon>
+          </Group>
+          {vendorsLoading && (
+            <Center py="md">
+              <Loader size="sm" />
+            </Center>
+          )}
+          {!vendorsLoading && eventVendorAssignments?.length === 0 && (
+            <Text c="dimmed" size="sm">
+              No vendors assigned to this event yet.
+            </Text>
+          )}
+          {eventVendorAssignments?.map((a) => (
+            <Group key={a.id} justify="space-between" wrap="nowrap" py={6}>
+              <Text size="sm">
+                {a.vendorName}
+                {a.responsibility && (
+                  <Text span size="xs" c="dimmed">
+                    {' '}
+                    — {a.responsibility}
+                  </Text>
+                )}
+              </Text>
+              <Badge size="xs" color={a.status === 'Completed' ? 'green' : a.status === 'Confirmed' ? 'blue' : 'gray'} variant="light">
+                {a.status}
+              </Badge>
+            </Group>
+          ))}
+        </>
+      )}
+
       <Group justify="space-between" mt="md">
         <Title order={4}>Timeline</Title>
         {canManage && (
@@ -279,6 +340,21 @@ export function EventDetailPage() {
           eventName={event.name}
           opened={addTimelineOpen}
           onClose={() => setAddTimelineOpen(false)}
+        />
+      )}
+      {canManage && (
+        <AssignVendorToEventModal
+          eventId={event.id}
+          opened={addVendorOpen}
+          onClose={() => setAddVendorOpen(false)}
+        />
+      )}
+      {canManage && (
+        <MenuDetailModal
+          eventId={event.id}
+          eventName={event.name}
+          opened={menuOpen}
+          onClose={() => setMenuOpen(false)}
         />
       )}
     </Stack>

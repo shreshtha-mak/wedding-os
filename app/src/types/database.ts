@@ -12,6 +12,19 @@ export type AttendanceStatus = 'Pending' | 'Attending' | 'Not attending' | 'Mayb
 export type TransportStatus = 'Needed' | 'Assigned' | 'Confirmed' | 'Completed'
 export type OutfitComponentStatus = 'Idea' | 'To Buy' | 'In Making' | 'In Alteration' | 'Ready'
 export type ThingStatus = 'Idea' | 'To Buy' | 'Bought' | 'To Prepare' | 'Packed' | 'At Venue' | 'Returned'
+export type VendorStatus = 'Considering' | 'Confirmed' | 'Cancelled'
+export type VendorAssignmentStatus = 'Pending' | 'Confirmed' | 'Completed'
+export type ChecklistItemStatus = 'Not Started' | 'In Progress' | 'Done'
+export type MenuStatus = 'Draft' | 'Discussing' | 'Finalised'
+export type MenuItemCategory =
+  | 'Welcome drinks'
+  | 'Starters'
+  | 'Main course'
+  | 'Sides'
+  | 'Desserts'
+  | 'Beverages'
+  | 'Special requirements'
+  | 'Other'
 export type DietaryRequirement =
   | 'None'
   | 'Vegetarian'
@@ -840,6 +853,320 @@ export interface Database {
           },
         ]
       }
+      budget_categories: {
+        Row: { id: string; wedding_id: string; name: string; is_active: boolean }
+        Insert: { id?: string; wedding_id: string; name: string; is_active?: boolean }
+        Update: Partial<Database['public']['Tables']['budget_categories']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'budget_categories_wedding_id_fkey'
+            columns: ['wedding_id']
+            isOneToOne: false
+            referencedRelation: 'weddings'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      vendors: {
+        Row: {
+          id: string
+          wedding_id: string
+          name: string
+          category_id: string | null
+          contact_person: string | null
+          phone: string | null
+          whatsapp: string | null
+          email: string | null
+          address: string | null
+          status: VendorStatus
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          wedding_id: string
+          name: string
+          category_id?: string | null
+          contact_person?: string | null
+          phone?: string | null
+          whatsapp?: string | null
+          email?: string | null
+          address?: string | null
+          status?: VendorStatus
+          notes?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['vendors']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'vendors_wedding_id_fkey'
+            columns: ['wedding_id']
+            isOneToOne: false
+            referencedRelation: 'weddings'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'vendors_category_id_fkey'
+            columns: ['category_id']
+            isOneToOne: false
+            referencedRelation: 'budget_categories'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      vendor_event_assignments: {
+        Row: {
+          id: string
+          vendor_id: string
+          event_id: string
+          responsibility: string | null
+          setup_time: string | null
+          status: VendorAssignmentStatus
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          vendor_id: string
+          event_id: string
+          responsibility?: string | null
+          setup_time?: string | null
+          status?: VendorAssignmentStatus
+          notes?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['vendor_event_assignments']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'vendor_event_assignments_vendor_id_fkey'
+            columns: ['vendor_id']
+            isOneToOne: false
+            referencedRelation: 'vendors'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'vendor_event_assignments_event_id_fkey'
+            columns: ['event_id']
+            isOneToOne: false
+            referencedRelation: 'events'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      vendor_checklist_items: {
+        Row: {
+          id: string
+          assignment_id: string
+          item_name: string
+          responsible_contact: string | null
+          due_date: string | null
+          status: ChecklistItemStatus
+          completed_date: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          assignment_id: string
+          item_name: string
+          responsible_contact?: string | null
+          due_date?: string | null
+          status?: ChecklistItemStatus
+          completed_date?: string | null
+          notes?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['vendor_checklist_items']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'vendor_checklist_items_assignment_id_fkey'
+            columns: ['assignment_id']
+            isOneToOne: false
+            referencedRelation: 'vendor_event_assignments'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      menus: {
+        Row: {
+          id: string
+          wedding_id: string
+          event_id: string
+          status: MenuStatus
+          caterer_vendor_id: string | null
+          finalised_date: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          wedding_id: string
+          event_id: string
+          status?: MenuStatus
+          caterer_vendor_id?: string | null
+          finalised_date?: string | null
+          notes?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['menus']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'menus_wedding_id_fkey'
+            columns: ['wedding_id']
+            isOneToOne: false
+            referencedRelation: 'weddings'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'menus_event_id_fkey'
+            columns: ['event_id']
+            isOneToOne: true
+            referencedRelation: 'events'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'menus_caterer_vendor_id_fkey'
+            columns: ['caterer_vendor_id']
+            isOneToOne: false
+            referencedRelation: 'vendors'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      menu_items: {
+        Row: {
+          id: string
+          menu_id: string
+          item_name: string
+          category: MenuItemCategory
+          is_vegetarian: boolean | null
+          is_active: boolean
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          menu_id: string
+          item_name: string
+          category?: MenuItemCategory
+          is_vegetarian?: boolean | null
+          is_active?: boolean
+          notes?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['menu_items']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'menu_items_menu_id_fkey'
+            columns: ['menu_id']
+            isOneToOne: false
+            referencedRelation: 'menus'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      expenses: {
+        Row: {
+          id: string
+          wedding_id: string
+          event_id: string | null
+          category_id: string | null
+          vendor_id: string | null
+          name: string
+          budgeted_amount: number | null
+          quoted_amount: number | null
+          finalised_amount: number | null
+          due_date: string | null
+          notes: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          wedding_id: string
+          event_id?: string | null
+          category_id?: string | null
+          vendor_id?: string | null
+          name: string
+          budgeted_amount?: number | null
+          quoted_amount?: number | null
+          finalised_amount?: number | null
+          due_date?: string | null
+          notes?: string | null
+          created_by?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['expenses']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'expenses_wedding_id_fkey'
+            columns: ['wedding_id']
+            isOneToOne: false
+            referencedRelation: 'weddings'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'expenses_event_id_fkey'
+            columns: ['event_id']
+            isOneToOne: false
+            referencedRelation: 'events'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'expenses_category_id_fkey'
+            columns: ['category_id']
+            isOneToOne: false
+            referencedRelation: 'budget_categories'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'expenses_vendor_id_fkey'
+            columns: ['vendor_id']
+            isOneToOne: false
+            referencedRelation: 'vendors'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          id: string
+          expense_id: string
+          amount: number
+          payment_date: string
+          payment_method: string | null
+          paid_by_person_id: string | null
+          reference_number: string | null
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          expense_id: string
+          amount: number
+          payment_date?: string
+          payment_method?: string | null
+          paid_by_person_id?: string | null
+          reference_number?: string | null
+          notes?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['payments']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'payments_expense_id_fkey'
+            columns: ['expense_id']
+            isOneToOne: false
+            referencedRelation: 'expenses'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'payments_paid_by_person_id_fkey'
+            columns: ['paid_by_person_id']
+            isOneToOne: false
+            referencedRelation: 'people'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       activity_log: {
         Row: {
           id: string
@@ -924,3 +1251,18 @@ export type Outfit = Database['public']['Tables']['outfits']['Row']
 export type OutfitInsert = Database['public']['Tables']['outfits']['Insert']
 export type ThingToTake = Database['public']['Tables']['things_to_take']['Row']
 export type ThingToTakeInsert = Database['public']['Tables']['things_to_take']['Insert']
+export type BudgetCategory = Database['public']['Tables']['budget_categories']['Row']
+export type Vendor = Database['public']['Tables']['vendors']['Row']
+export type VendorInsert = Database['public']['Tables']['vendors']['Insert']
+export type VendorEventAssignment = Database['public']['Tables']['vendor_event_assignments']['Row']
+export type VendorEventAssignmentInsert = Database['public']['Tables']['vendor_event_assignments']['Insert']
+export type VendorChecklistItem = Database['public']['Tables']['vendor_checklist_items']['Row']
+export type VendorChecklistItemInsert = Database['public']['Tables']['vendor_checklist_items']['Insert']
+export type Menu = Database['public']['Tables']['menus']['Row']
+export type MenuInsert = Database['public']['Tables']['menus']['Insert']
+export type MenuItem = Database['public']['Tables']['menu_items']['Row']
+export type MenuItemInsert = Database['public']['Tables']['menu_items']['Insert']
+export type Expense = Database['public']['Tables']['expenses']['Row']
+export type ExpenseInsert = Database['public']['Tables']['expenses']['Insert']
+export type Payment = Database['public']['Tables']['payments']['Row']
+export type PaymentInsert = Database['public']['Tables']['payments']['Insert']

@@ -1,8 +1,9 @@
 import { UnstyledButton, Text } from '@mantine/core'
-import { IconCalendarEvent, IconClipboardList, IconHome, IconUsers } from '@tabler/icons-react'
+import { IconCalendarEvent, IconClipboardList, IconDots, IconHome, IconUsers } from '@tabler/icons-react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { useAuth } from '../../features/auth/AuthContext'
 
-const TABS = [
+const BASE_TABS = [
   { to: '/', label: 'Home', icon: IconHome },
   { to: '/events', label: 'Events', icon: IconCalendarEvent },
   { to: '/planning', label: 'Planning', icon: IconClipboardList },
@@ -11,6 +12,12 @@ const TABS = [
 
 export function AppLayout() {
   const location = useLocation()
+  const { person } = useAuth()
+  // More (Vendors/Budget/Menus) is entirely organiser/admin-only at the RLS
+  // level, so a restricted user would land on three empty tabs — hide the
+  // whole entry point rather than show a section with nothing in it.
+  const canSeeMore = person?.role_id === 'admin' || person?.role_id === 'organiser'
+  const tabs = canSeeMore ? [...BASE_TABS, { to: '/more', label: 'More', icon: IconDots }] : BASE_TABS
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100svh' }}>
@@ -30,7 +37,7 @@ export function AppLayout() {
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
       >
-        {TABS.map(({ to, label, icon: Icon }) => {
+        {tabs.map(({ to, label, icon: Icon }) => {
           const active = to === '/' ? location.pathname === '/' : location.pathname.startsWith(to)
           return (
             <UnstyledButton

@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from './supabase'
-import type { EventRow, Person, TaskCategory, Wedding } from '../types/database'
+import type { BudgetCategory, EventRow, Person, TaskCategory, Wedding } from '../types/database'
 
 export function useWedding() {
   return useQuery({
@@ -54,6 +54,23 @@ export function useTaskCategories() {
         .order('name')
       if (error) throw error
       return data as TaskCategory[]
+    },
+  })
+}
+
+// Shared by Vendors (vendor "type") and Expenses ("category") — the same
+// underlying dimension, not two near-duplicate lookup tables.
+export function useBudgetCategories() {
+  return useQuery({
+    queryKey: ['budget_categories'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('budget_categories')
+        .select('*')
+        .eq('is_active', true)
+        .order('name')
+      if (error) throw error
+      return data as BudgetCategory[]
     },
   })
 }
