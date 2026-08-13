@@ -1,5 +1,5 @@
-import { Badge, Card, Center, Group, Loader, Stack, Text, Title, UnstyledButton } from '@mantine/core'
-import { IconAlertTriangle, IconLogout, IconSearch } from '@tabler/icons-react'
+import { Avatar, Badge, Card, Center, Group, Loader, Stack, Text, Title, UnstyledButton } from '@mantine/core'
+import { IconAlertTriangle, IconSearch } from '@tabler/icons-react'
 import dayjs from 'dayjs'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
@@ -9,8 +9,6 @@ import { useRecentActivity } from '../activity/api'
 import { useDecisions } from '../decisions/api'
 import { useChallenges } from '../challenges/api'
 import { useCalendarItems } from '../calendar/api'
-import { useThings } from '../things/api'
-import { useOutfits } from '../outfits/api'
 import { useWeddingReadinessData, useNeedsAttentionData } from '../readiness/api'
 import { computeWeddingReadiness, readinessLevelColor, readinessLevelLabel } from '../readiness/calculate'
 import { computeNeedsAttention } from '../readiness/needsAttention'
@@ -163,23 +161,21 @@ function UpcomingEvents() {
 function MyThings() {
   const { person } = useAuth()
   const { data: tasks, isLoading: tasksLoading, isError: tasksError } = useTasks('mine', person?.id)
-  const { data: things, isLoading: thingsLoading, isError: thingsError } = useThings('mine', person?.id)
-  const { data: outfits, isLoading: outfitsLoading, isError: outfitsError } = useOutfits()
   const { data: decisions, isLoading: decisionsLoading, isError: decisionsError } = useDecisions('mine', person?.id)
   const { data: challenges, isLoading: challengesLoading, isError: challengesError } = useChallenges('mine', person?.id)
 
-  const isLoading = tasksLoading || thingsLoading || outfitsLoading || decisionsLoading || challengesLoading
-  const isError = tasksError || thingsError || outfitsError || decisionsError || challengesError
+  // Deliberately Tasks/Decisions/Challenges only — Outfits and Things to
+  // Take are important planning modules but not part of "what's mine" in
+  // the sense this card means (per the screen spec: "do NOT create
+  // separate My Outfits or My Vendors sections").
+  const isLoading = tasksLoading || decisionsLoading || challengesLoading
+  const isError = tasksError || decisionsError || challengesError
 
   const pendingTasks = (tasks ?? []).filter((t) => t.status !== 'Completed')
-  const pendingThings = (things ?? []).filter((t) => t.status !== 'Packed' && t.status !== 'At Venue' && t.status !== 'Returned')
-  const pendingOutfits = (outfits ?? []).filter(
-    (o) => !o.is_ready && (o.person_id === person?.id || o.responsible_person_id === person?.id),
-  )
   const pendingDecisions = (decisions ?? []).filter((d) => d.status === 'Pending')
   const openChallenges = (challenges ?? []).filter((c) => c.status !== 'Resolved')
 
-  const total = pendingTasks.length + pendingThings.length + pendingOutfits.length + pendingDecisions.length + openChallenges.length
+  const total = pendingTasks.length + pendingDecisions.length + openChallenges.length
 
   return (
     <Card withBorder radius="md" p="lg">
@@ -217,26 +213,6 @@ function MyThings() {
             </Group>
           )
         })}
-        {pendingOutfits.slice(0, 2).map((o) => (
-          <Group key={o.id} justify="space-between" wrap="nowrap">
-            <Text size="sm" style={{ flex: 1 }}>
-              {o.person.name}'s {o.event.name} outfit
-            </Text>
-            <Badge size="xs" color="gray" variant="light">
-              {o.outfit_status}
-            </Badge>
-          </Group>
-        ))}
-        {pendingThings.slice(0, 2).map((t) => (
-          <Group key={t.id} justify="space-between" wrap="nowrap">
-            <Text size="sm" style={{ flex: 1 }}>
-              {t.item_name}
-            </Text>
-            <Badge size="xs" color="gray" variant="light">
-              {t.status}
-            </Badge>
-          </Group>
-        ))}
         {pendingDecisions.slice(0, 2).map((d) => (
           <Group key={d.id} justify="space-between" wrap="nowrap">
             <Text size="sm" style={{ flex: 1 }}>
@@ -422,7 +398,7 @@ function RecentActivity() {
 
 export function HomePage() {
   const navigate = useNavigate()
-  const { person, signOut } = useAuth()
+  const { person } = useAuth()
   const { data: wedding } = useWedding()
   const { data: events } = useEvents()
   const canSeeReadiness = person?.role_id === 'admin' || person?.role_id === 'organiser'
@@ -440,8 +416,10 @@ export function HomePage() {
           <UnstyledButton onClick={() => navigate('/search')} aria-label="Search">
             <IconSearch size={22} />
           </UnstyledButton>
-          <UnstyledButton onClick={() => signOut()} aria-label="Sign out">
-            <IconLogout size={22} />
+          <UnstyledButton onClick={() => navigate('/profile')} aria-label="My Profile">
+            <Avatar radius="xl" size={30} color="rose">
+              {person?.name?.[0]?.toUpperCase() ?? '?'}
+            </Avatar>
           </UnstyledButton>
         </Group>
       </Group>

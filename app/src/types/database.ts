@@ -9,22 +9,29 @@ export type RoleId = 'admin' | 'organiser' | 'restricted'
 export type DecisionStatus = 'Pending' | 'Decided'
 export type ChallengeStatus = 'Open' | 'Being Resolved' | 'Resolved'
 export type AttendanceStatus = 'Pending' | 'Attending' | 'Not attending' | 'Maybe'
+// "Own arrangement" and "Not needed" both count as satisfied for readiness;
+// "Unknown" does not (it means the family hasn't determined this guest's
+// need yet), and "Required" is only satisfied once it becomes "Arranged".
+export type TransportRequirement = 'Unknown' | 'Not needed' | 'Own arrangement' | 'Required' | 'Arranged'
 export type TransportStatus = 'Needed' | 'Assigned' | 'Confirmed' | 'Completed'
 export type OutfitComponentStatus = 'Idea' | 'To Buy' | 'In Making' | 'In Alteration' | 'Ready'
 export type ThingStatus = 'Idea' | 'To Buy' | 'Bought' | 'To Prepare' | 'Packed' | 'At Venue' | 'Returned'
-export type VendorStatus = 'Considering' | 'Confirmed' | 'Cancelled'
+export type VendorStatus = 'Prospect' | 'Shortlisted' | 'Confirmed' | 'Completed' | 'Cancelled'
 export type VendorAssignmentStatus = 'Pending' | 'Confirmed' | 'Completed'
 export type ChecklistItemStatus = 'Not Started' | 'In Progress' | 'Done'
 export type MenuStatus = 'Draft' | 'Discussing' | 'Finalised'
-export type MenuItemCategory =
-  | 'Welcome drinks'
-  | 'Starters'
-  | 'Main course'
-  | 'Sides'
-  | 'Desserts'
-  | 'Beverages'
-  | 'Special requirements'
+export type DecorCategory =
+  | 'Mandap/Stage'
+  | 'Entrance'
+  | 'Seating'
+  | 'Lighting'
+  | 'Floral'
+  | 'Table Settings'
+  | 'Photo Booth'
+  | 'Signage'
   | 'Other'
+export type DecorStatus = 'Concept' | 'Confirmed' | 'In Progress' | 'Done'
+export type AccommodationBookingStatus = 'Requested' | 'Confirmed' | 'Cancelled'
 export type DietaryRequirement =
   | 'None'
   | 'Vegetarian'
@@ -525,7 +532,7 @@ export interface Database {
           event_id: string
           status: AttendanceStatus
           num_attending: number
-          transportation_required: boolean
+          transportation_status: TransportRequirement
           arrived: boolean
           notes: string | null
           created_at: string
@@ -537,7 +544,7 @@ export interface Database {
           event_id: string
           status?: AttendanceStatus
           num_attending?: number
-          transportation_required?: boolean
+          transportation_status?: TransportRequirement
           arrived?: boolean
           notes?: string | null
         }
@@ -597,12 +604,67 @@ export interface Database {
           },
         ]
       }
+      accommodation_bookings: {
+        Row: {
+          id: string
+          wedding_id: string
+          location_id: string
+          vendor_id: string | null
+          booking_reference: string | null
+          check_in: string | null
+          check_out: string | null
+          num_rooms: number
+          cost: number | null
+          status: AccommodationBookingStatus
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          wedding_id: string
+          location_id: string
+          vendor_id?: string | null
+          booking_reference?: string | null
+          check_in?: string | null
+          check_out?: string | null
+          num_rooms?: number
+          cost?: number | null
+          status?: AccommodationBookingStatus
+          notes?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['accommodation_bookings']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'accommodation_bookings_wedding_id_fkey'
+            columns: ['wedding_id']
+            isOneToOne: false
+            referencedRelation: 'weddings'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'accommodation_bookings_location_id_fkey'
+            columns: ['location_id']
+            isOneToOne: false
+            referencedRelation: 'accommodation_locations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'accommodation_bookings_vendor_id_fkey'
+            columns: ['vendor_id']
+            isOneToOne: false
+            referencedRelation: 'vendors'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       accommodation_rooms: {
         Row: {
           id: string
           location_id: string
           room_name: string
           capacity: number
+          booking_id: string | null
           notes: string | null
           created_at: string
           updated_at: string
@@ -612,6 +674,7 @@ export interface Database {
           location_id: string
           room_name: string
           capacity?: number
+          booking_id?: string | null
           notes?: string | null
         }
         Update: Partial<Database['public']['Tables']['accommodation_rooms']['Insert']>
@@ -621,6 +684,13 @@ export interface Database {
             columns: ['location_id']
             isOneToOne: false
             referencedRelation: 'accommodation_locations'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'accommodation_rooms_booking_id_fkey'
+            columns: ['booking_id']
+            isOneToOne: false
+            referencedRelation: 'accommodation_bookings'
             referencedColumns: ['id']
           },
         ]
@@ -989,6 +1059,58 @@ export interface Database {
           },
         ]
       }
+      decor_items: {
+        Row: {
+          id: string
+          wedding_id: string
+          event_id: string | null
+          name: string
+          category: DecorCategory
+          vendor_id: string | null
+          status: DecorStatus
+          cost: number | null
+          notes: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          wedding_id: string
+          event_id?: string | null
+          name: string
+          category?: DecorCategory
+          vendor_id?: string | null
+          status?: DecorStatus
+          cost?: number | null
+          notes?: string | null
+          created_by?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['decor_items']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'decor_items_wedding_id_fkey'
+            columns: ['wedding_id']
+            isOneToOne: false
+            referencedRelation: 'weddings'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'decor_items_event_id_fkey'
+            columns: ['event_id']
+            isOneToOne: false
+            referencedRelation: 'events'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'decor_items_vendor_id_fkey'
+            columns: ['vendor_id']
+            isOneToOne: false
+            referencedRelation: 'vendors'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       menus: {
         Row: {
           id: string
@@ -1040,7 +1162,7 @@ export interface Database {
           id: string
           menu_id: string
           item_name: string
-          category: MenuItemCategory
+          category_id: string
           is_vegetarian: boolean | null
           is_active: boolean
           notes: string | null
@@ -1050,7 +1172,7 @@ export interface Database {
           id?: string
           menu_id: string
           item_name: string
-          category?: MenuItemCategory
+          category_id: string
           is_vegetarian?: boolean | null
           is_active?: boolean
           notes?: string | null
@@ -1062,6 +1184,27 @@ export interface Database {
             columns: ['menu_id']
             isOneToOne: false
             referencedRelation: 'menus'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'menu_items_category_id_fkey'
+            columns: ['category_id']
+            isOneToOne: false
+            referencedRelation: 'menu_categories'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      menu_categories: {
+        Row: { id: string; wedding_id: string; name: string; is_active: boolean }
+        Insert: { id?: string; wedding_id: string; name: string; is_active?: boolean }
+        Update: Partial<Database['public']['Tables']['menu_categories']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'menu_categories_wedding_id_fkey'
+            columns: ['wedding_id']
+            isOneToOne: false
+            referencedRelation: 'weddings'
             referencedColumns: ['id']
           },
         ]
@@ -1288,6 +1431,10 @@ export interface Database {
         Args: { target_person_id: string; target_email: string }
         Returns: void
       }
+      update_my_profile: {
+        Args: { p_name: string; p_phone: string | null }
+        Returns: void
+      }
       log_activity: {
         Args: {
           p_entity_type: string
@@ -1302,6 +1449,7 @@ export interface Database {
 }
 
 export type Wedding = Database['public']['Tables']['weddings']['Row']
+export type WeddingInsert = Database['public']['Tables']['weddings']['Insert']
 export type EventRow = Database['public']['Tables']['events']['Row']
 export type Person = Database['public']['Tables']['people']['Row']
 export type UserAccount = Database['public']['Tables']['user_accounts']['Row']
@@ -1321,6 +1469,8 @@ export type GuestEventAttendance = Database['public']['Tables']['guest_event_att
 export type GuestEventAttendanceInsert = Database['public']['Tables']['guest_event_attendance']['Insert']
 export type AccommodationLocation = Database['public']['Tables']['accommodation_locations']['Row']
 export type AccommodationLocationInsert = Database['public']['Tables']['accommodation_locations']['Insert']
+export type AccommodationBooking = Database['public']['Tables']['accommodation_bookings']['Row']
+export type AccommodationBookingInsert = Database['public']['Tables']['accommodation_bookings']['Insert']
 export type AccommodationRoom = Database['public']['Tables']['accommodation_rooms']['Row']
 export type AccommodationRoomInsert = Database['public']['Tables']['accommodation_rooms']['Insert']
 export type AccommodationAssignment = Database['public']['Tables']['accommodation_assignments']['Row']
@@ -1338,10 +1488,13 @@ export type VendorEventAssignment = Database['public']['Tables']['vendor_event_a
 export type VendorEventAssignmentInsert = Database['public']['Tables']['vendor_event_assignments']['Insert']
 export type VendorChecklistItem = Database['public']['Tables']['vendor_checklist_items']['Row']
 export type VendorChecklistItemInsert = Database['public']['Tables']['vendor_checklist_items']['Insert']
+export type DecorItem = Database['public']['Tables']['decor_items']['Row']
+export type DecorItemInsert = Database['public']['Tables']['decor_items']['Insert']
 export type Menu = Database['public']['Tables']['menus']['Row']
 export type MenuInsert = Database['public']['Tables']['menus']['Insert']
 export type MenuItem = Database['public']['Tables']['menu_items']['Row']
 export type MenuItemInsert = Database['public']['Tables']['menu_items']['Insert']
+export type MenuCategory = Database['public']['Tables']['menu_categories']['Row']
 export type Expense = Database['public']['Tables']['expenses']['Row']
 export type ExpenseInsert = Database['public']['Tables']['expenses']['Insert']
 export type Payment = Database['public']['Tables']['payments']['Row']

@@ -36,9 +36,13 @@ import { useVendors } from '../vendors/api'
 import { AssignVendorToEventModal } from '../vendors/AssignVendorToEventModal'
 import { useMenuForEvent } from '../menus/api'
 import { MenuDetailModal } from '../menus/MenuDetailModal'
+import { useDecorForEvent } from '../decor/api'
+import { DecorItemRow } from '../decor/DecorItemRow'
+import { AddDecorModal } from '../decor/AddDecorModal'
 import { useEventTimeline } from './api'
 import { AddTimelineItemModal } from './AddTimelineItemModal'
 import { computeEventReadiness, readinessColor } from './readiness'
+import { ContextDocuments } from '../documents/ContextDocuments'
 
 function formatTime(time: string | null) {
   if (!time) return null
@@ -62,9 +66,19 @@ export function EventDetailPage() {
   const { data: things, isLoading: thingsLoading, isError: thingsError } = useThingsForEvent(eventId)
   const { data: allVendors, isLoading: vendorsLoading, isError: vendorsError } = useVendors()
   const { data: menu } = useMenuForEvent(canManage ? eventId : undefined)
+  const { data: decorItems, isLoading: decorLoading, isError: decorError } = useDecorForEvent(
+    canManage ? eventId : undefined,
+  )
 
   const hasLoadError =
-    tasksError || timelineError || decisionsError || challengesError || outfitsError || thingsError || vendorsError
+    tasksError ||
+    timelineError ||
+    decisionsError ||
+    challengesError ||
+    outfitsError ||
+    thingsError ||
+    vendorsError ||
+    decorError
 
   const [addTaskOpen, setAddTaskOpen] = useState(false)
   const [addTimelineOpen, setAddTimelineOpen] = useState(false)
@@ -74,6 +88,7 @@ export function EventDetailPage() {
   const [addThingOpen, setAddThingOpen] = useState(false)
   const [addVendorOpen, setAddVendorOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [addDecorOpen, setAddDecorOpen] = useState(false)
 
   const eventVendorAssignments = allVendors
     ?.flatMap((v) => v.assignments.filter((a) => a.event_id === eventId).map((a) => ({ ...a, vendorName: v.name })))
@@ -278,6 +293,24 @@ export function EventDetailPage() {
               </Badge>
             </Group>
           ))}
+
+          <Group justify="space-between" mt="md">
+            <Title order={4}>Decor</Title>
+            <ActionIcon variant="subtle" onClick={() => setAddDecorOpen(true)} aria-label="Add decor item">
+              <IconPlus size={20} />
+            </ActionIcon>
+          </Group>
+          {decorLoading && (
+            <Center py="md">
+              <Loader size="sm" />
+            </Center>
+          )}
+          {!decorLoading && decorItems?.length === 0 && (
+            <Text c="dimmed" size="sm">
+              No decor items for this event yet.
+            </Text>
+          )}
+          {decorItems?.map((item) => <DecorItemRow key={item.id} item={item} />)}
         </>
       )}
 
@@ -323,6 +356,8 @@ export function EventDetailPage() {
         ))}
       </Stack>
 
+      <ContextDocuments eventId={event.id} />
+
       {canManage && (
         <AddTaskModal opened={addTaskOpen} onClose={() => setAddTaskOpen(false)} defaultEventId={event.id} />
       )}
@@ -366,6 +401,9 @@ export function EventDetailPage() {
           opened={menuOpen}
           onClose={() => setMenuOpen(false)}
         />
+      )}
+      {canManage && (
+        <AddDecorModal opened={addDecorOpen} onClose={() => setAddDecorOpen(false)} defaultEventId={event.id} />
       )}
     </Stack>
   )

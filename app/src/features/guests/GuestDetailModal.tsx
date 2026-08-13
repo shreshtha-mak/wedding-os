@@ -15,12 +15,19 @@ import {
 } from '@mantine/core'
 import { useUpdateAttendance, useUpdateGuest } from './api'
 import type { GuestWithDetails } from './api'
-import type { AttendanceStatus, DietaryRequirement } from '../../types/database'
+import type { AttendanceStatus, DietaryRequirement, TransportRequirement } from '../../types/database'
+import { ContextDocuments } from '../documents/ContextDocuments'
 
 const DIETARY_OPTIONS: DietaryRequirement[] = [
   'None', 'Vegetarian', 'Vegan', 'Jain', 'Gluten-free', 'Allergy', 'Other',
 ]
 const ATTENDANCE_OPTIONS: AttendanceStatus[] = ['Pending', 'Attending', 'Not attending', 'Maybe']
+// "Own arrangement" and "Not needed" both count as satisfied; "Unknown"
+// does not (the family hasn't determined it yet), and "Required" isn't
+// satisfied until it becomes "Arranged".
+const TRANSPORT_OPTIONS: TransportRequirement[] = [
+  'Unknown', 'Not needed', 'Own arrangement', 'Required', 'Arranged',
+]
 
 function attendanceColor(status: AttendanceStatus): string {
   switch (status) {
@@ -35,6 +42,19 @@ function attendanceColor(status: AttendanceStatus): string {
   }
 }
 
+function transportColor(status: TransportRequirement): string {
+  switch (status) {
+    case 'Arranged':
+    case 'Own arrangement':
+    case 'Not needed':
+      return 'green'
+    case 'Required':
+      return 'red'
+    case 'Unknown':
+      return 'gray'
+  }
+}
+
 function AttendanceRow({
   attendance,
 }: {
@@ -43,39 +63,52 @@ function AttendanceRow({
   const updateAttendance = useUpdateAttendance()
 
   return (
-    <Group justify="space-between" wrap="nowrap" py={4}>
-      <Text size="sm" style={{ flex: 1 }}>
-        {attendance.event.name}
-      </Text>
-      <Checkbox
-        label="Transport"
-        size="xs"
-        checked={attendance.transportation_required}
-        onChange={(e) =>
-          updateAttendance.mutate({
-            id: attendance.id,
-            status: attendance.status,
-            transportationRequired: e.currentTarget.checked,
-          })
-        }
-      />
-      <Select
-        size="xs"
-        w={130}
-        data={ATTENDANCE_OPTIONS}
-        value={attendance.status}
-        allowDeselect={false}
-        onChange={(v) =>
-          v &&
-          updateAttendance.mutate({
-            id: attendance.id,
-            status: v as AttendanceStatus,
-            transportationRequired: attendance.transportation_required,
-          })
-        }
-        leftSection={<Badge size="xs" color={attendanceColor(attendance.status)} circle w={8} h={8} p={0} />}
-      />
-    </Group>
+    <Stack gap={4} py={4}>
+      <Group justify="space-between" wrap="nowrap">
+        <Text size="sm" fw={500} style={{ flex: 1 }}>
+          {attendance.event.name}
+        </Text>
+        <Select
+          size="xs"
+          w={130}
+          data={ATTENDANCE_OPTIONS}
+          value={attendance.status}
+          allowDeselect={false}
+          onChange={(v) =>
+            v &&
+            updateAttendance.mutate({
+              id: attendance.id,
+              status: v as AttendanceStatus,
+              transportationStatus: attendance.transportation_status,
+            })
+          }
+          leftSection={<Badge size="xs" color={attendanceColor(attendance.status)} circle w={8} h={8} p={0} />}
+        />
+      </Group>
+      <Group justify="flex-end" wrap="nowrap">
+        <Text size="xs" c="dimmed" style={{ flex: 1 }}>
+          Transport
+        </Text>
+        <Select
+          size="xs"
+          w={150}
+          data={TRANSPORT_OPTIONS}
+          value={attendance.transportation_status}
+          allowDeselect={false}
+          onChange={(v) =>
+            v &&
+            updateAttendance.mutate({
+              id: attendance.id,
+              status: attendance.status,
+              transportationStatus: v as TransportRequirement,
+            })
+          }
+          leftSection={
+            <Badge size="xs" color={transportColor(attendance.transportation_status)} circle w={8} h={8} p={0} />
+          }
+        />
+      </Group>
+    </Stack>
   )
 }
 
@@ -158,6 +191,9 @@ export function GuestDetailModal({
             <AttendanceRow key={a.id} attendance={a} />
           ))}
         </Stack>
+
+        <Divider my={4} />
+        <ContextDocuments guestId={guest.id} />
       </Stack>
     </Modal>
   )

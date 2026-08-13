@@ -13,12 +13,56 @@ import {
   UnstyledButton,
 } from '@mantine/core'
 import { IconPlus, IconX } from '@tabler/icons-react'
+import dayjs from 'dayjs'
 import { useAccommodationLocations, useRemoveAssignment } from './api'
 import { useGuests } from '../guests/api'
 import { AddLocationModal } from './AddLocationModal'
 import { AddRoomModal } from './AddRoomModal'
+import { AddBookingModal } from './AddBookingModal'
 import { AssignGuestModal } from './AssignGuestModal'
-import type { RoomWithAssignments } from './api'
+import type { BookingWithVendor, RoomWithAssignments } from './api'
+
+function bookingStatusColor(status: string): string {
+  switch (status) {
+    case 'Confirmed':
+      return 'green'
+    case 'Cancelled':
+      return 'gray'
+    default:
+      return 'blue'
+  }
+}
+
+function BookingRow({ booking }: { booking: BookingWithVendor }) {
+  const dates =
+    booking.check_in && booking.check_out
+      ? `${dayjs(booking.check_in).format('DD MMM')} – ${dayjs(booking.check_out).format('DD MMM')}`
+      : null
+
+  return (
+    <Group justify="space-between" wrap="nowrap" py={4}>
+      <Stack gap={0}>
+        <Text size="sm">
+          {booking.booking_reference || booking.vendor?.name || 'Booking'}
+          {booking.vendor && booking.booking_reference && (
+            <Text span size="xs" c="dimmed">
+              {' '}
+              · {booking.vendor.name}
+            </Text>
+          )}
+        </Text>
+        <Text size="xs" c="dimmed">
+          {[dates, `${booking.num_rooms} room${booking.num_rooms === 1 ? '' : 's'}`, booking.cost != null && `₹${booking.cost.toLocaleString('en-IN')}`]
+            .filter(Boolean)
+            .join(' · ')}
+        </Text>
+      </Stack>
+      <Badge size="xs" color={bookingStatusColor(booking.status)} variant="light">
+        {booking.status}
+      </Badge>
+    </Group>
+  )
+}
 
 function RoomRow({ room }: { room: RoomWithAssignments }) {
   const [assignOpen, setAssignOpen] = useState(false)
@@ -57,7 +101,12 @@ function RoomRow({ room }: { room: RoomWithAssignments }) {
           </Group>
         ))}
       </Stack>
-      <AssignGuestModal roomId={room.id} opened={assignOpen} onClose={() => setAssignOpen(false)} />
+      <AssignGuestModal
+        roomId={room.id}
+        remainingCapacity={room.capacity - occupied}
+        opened={assignOpen}
+        onClose={() => setAssignOpen(false)}
+      />
     </>
   )
 }
@@ -67,6 +116,7 @@ export function AccommodationPanel() {
   const { data: guests } = useGuests()
   const [addLocationOpen, setAddLocationOpen] = useState(false)
   const [addRoomFor, setAddRoomFor] = useState<string | null>(null)
+  const [addBookingFor, setAddBookingFor] = useState<string | null>(null)
 
   const assignedGuestIds = new Set(
     locations?.flatMap((l) => l.rooms.flatMap((r) => r.assignments.map((a) => a.guest.id))),
@@ -121,12 +171,28 @@ export function AccommodationPanel() {
                 </Text>
               )}
             </div>
-            <UnstyledButton onClick={() => setAddRoomFor(location.id)}>
-              <Text size="xs" c="blue">
-                + Room
-              </Text>
-            </UnstyledButton>
+            <Group gap="sm">
+              <UnstyledButton onClick={() => setAddBookingFor(location.id)}>
+                <Text size="xs" c="blue">
+                  + Booking
+                </Text>
+              </UnstyledButton>
+              <UnstyledButton onClick={() => setAddRoomFor(location.id)}>
+                <Text size="xs" c="blue">
+                  + Room
+                </Text>
+              </UnstyledButton>
+            </Group>
           </Group>
+
+          {location.bookings.length > 0 && (
+            <Stack gap={0} mt="sm">
+              {location.bookings.map((booking) => (
+                <BookingRow key={booking.id} booking={booking} />
+              ))}
+            </Stack>
+          )}
+
           <Stack gap={0} mt="sm">
             {location.rooms.map((room) => (
               <RoomRow key={room.id} room={room} />
@@ -148,7 +214,15 @@ export function AccommodationPanel() {
 
       <AddLocationModal opened={addLocationOpen} onClose={() => setAddLocationOpen(false)} />
       {addRoomFor && (
-        <AddRoomModal locationId={addRoomFor} opened={!!addRoomFor} onClose={() => setAddRoomFor(null)} />
+        <AddRoomModal
+          locationId={addRoomFor}
+          bookings={locations?.find((l) => l.id === addRoomFor)?.bookings ?? []}
+          opened={!!addRoomFor}
+          onClose={() => setAddRoomFor(null)}
+        />
+      )}
+      {addBookingFor && (
+        <AddBookingModal locationId={addBookingFor} opened={!!addBookingFor} onClose={() => setAddBookingFor(null)} />
       )}
     </Stack>
   )

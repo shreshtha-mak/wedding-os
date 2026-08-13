@@ -34,6 +34,35 @@ export function useDocuments() {
   })
 }
 
+export type ContextFilter =
+  | { eventId: string; vendorId?: never; expenseId?: never; guestId?: never }
+  | { vendorId: string; eventId?: never; expenseId?: never; guestId?: never }
+  | { expenseId: string; eventId?: never; vendorId?: never; guestId?: never }
+  | { guestId: string; eventId?: never; vendorId?: never; expenseId?: never }
+
+export function useDocumentsFor(filter: ContextFilter) {
+  const [column, value] = filter.eventId
+    ? ['event_id', filter.eventId]
+    : filter.vendorId
+      ? ['vendor_id', filter.vendorId]
+      : filter.expenseId
+        ? ['expense_id', filter.expenseId]
+        : ['guest_id', filter.guestId as string]
+
+  return useQuery({
+    queryKey: ['documents', column, value],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('documents')
+        .select(DOCUMENT_SELECT)
+        .eq(column, value)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return data as unknown as DocumentWithRelations[]
+    },
+  })
+}
+
 interface UploadDocumentInput {
   file: File
   weddingId: string

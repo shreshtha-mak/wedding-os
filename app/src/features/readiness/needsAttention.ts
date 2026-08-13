@@ -14,6 +14,7 @@ export interface NeedsAttentionRaw {
   overdueDecisions: { id: string; question: string; deadline: string | null }[]
   overduePayments: { id: string; name: string; outstanding: number }[]
   guestsNeedingAccommodation: { id: string; name: string }[]
+  guestsNeedingTransport: { id: string; name: string; eventName: string }[]
 }
 
 export function computeNeedsAttention(data: NeedsAttentionRaw): AttentionItem[] {
@@ -64,6 +65,16 @@ export function computeNeedsAttention(data: NeedsAttentionRaw): AttentionItem[] 
       id: `guest-accom-${g.id}`,
       label: g.name,
       sublabel: 'Needs accommodation',
+      severity: 'warning',
+      linkTo: '/people',
+    })
+  }
+
+  for (const g of data.guestsNeedingTransport) {
+    items.push({
+      id: `guest-transport-${g.id}`,
+      label: g.name,
+      sublabel: `Needs transport · ${g.eventName}`,
       severity: 'warning',
       linkTo: '/people',
     })

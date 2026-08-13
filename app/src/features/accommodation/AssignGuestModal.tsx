@@ -1,60 +1,64 @@
 import { useState } from 'react'
-import { Button, Modal, Select, Stack } from '@mantine/core'
+import { Button, Modal, MultiSelect, Stack } from '@mantine/core'
 import { DateInput } from '@mantine/dates'
 import { useGuests } from '../guests/api'
-import { useAssignGuestToRoom } from './api'
+import { useAssignGuestsToRoom } from './api'
 
 export function AssignGuestModal({
   roomId,
+  remainingCapacity,
   opened,
   onClose,
 }: {
   roomId: string | null
+  remainingCapacity: number
   opened: boolean
   onClose: () => void
 }) {
   const { data: guests } = useGuests()
-  const assignGuest = useAssignGuestToRoom()
+  const assignGuests = useAssignGuestsToRoom()
 
-  const [guestId, setGuestId] = useState<string | null>(null)
+  const [guestIds, setGuestIds] = useState<string[]>([])
   const [checkIn, setCheckIn] = useState<string | null>(null)
   const [checkOut, setCheckOut] = useState<string | null>(null)
 
   function reset() {
-    setGuestId(null)
+    setGuestIds([])
     setCheckIn(null)
     setCheckOut(null)
   }
 
   async function handleSubmit() {
-    if (!roomId || !guestId) return
-    const guest = guests?.find((g) => g.id === guestId)
-    await assignGuest.mutateAsync({
-      roomId,
-      guestId,
-      checkIn,
-      checkOut,
-      guestName: guest?.person.name ?? 'Guest',
-    })
+    if (!roomId || guestIds.length === 0) return
+    const guestNames = guestIds.map((id) => guests?.find((g) => g.id === id)?.person.name ?? 'Guest')
+    await assignGuests.mutateAsync({ roomId, guestIds, checkIn, checkOut, guestNames })
     reset()
     onClose()
   }
 
   return (
-    <Modal opened={opened} onClose={onClose} title="Assign guest to room" centered>
+    <Modal opened={opened} onClose={onClose} title="Assign guests to room" centered>
       <Stack gap="sm">
-        <Select
-          label="Guest"
+        <MultiSelect
+          label="Guests"
+          description={`Up to ${remainingCapacity} more can be assigned to this room`}
           required
           searchable
           autoFocus
+          maxValues={remainingCapacity}
           data={guests?.map((g) => ({ value: g.id, label: g.person.name })) ?? []}
-          value={guestId}
-          onChange={setGuestId}
+          value={guestIds}
+          onChange={setGuestIds}
         />
         <DateInput label="Check-in" clearable value={checkIn} onChange={setCheckIn} valueFormat="DD MMM YYYY" />
         <DateInput label="Check-out" clearable value={checkOut} onChange={setCheckOut} valueFormat="DD MMM YYYY" />
-        <Button onClick={handleSubmit} loading={assignGuest.isPending} disabled={!guestId} fullWidth mt="xs">
+        <Button
+          onClick={handleSubmit}
+          loading={assignGuests.isPending}
+          disabled={guestIds.length === 0}
+          fullWidth
+          mt="xs"
+        >
           Assign
         </Button>
       </Stack>

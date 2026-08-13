@@ -21,7 +21,23 @@ import { useUploadDocument } from './api'
 
 const MAX_SIZE_MB = 10
 
-export function UploadDocumentModal({ opened, onClose }: { opened: boolean; onClose: () => void }) {
+export function UploadDocumentModal({
+  opened,
+  onClose,
+  defaultEventId,
+  defaultVendorId,
+  defaultExpenseId,
+  defaultGuestId,
+}: {
+  opened: boolean
+  onClose: () => void
+  // Preserves context when uploading from inside a specific record's page,
+  // instead of making the user re-pick what they're already looking at.
+  defaultEventId?: string
+  defaultVendorId?: string
+  defaultExpenseId?: string
+  defaultGuestId?: string
+}) {
   const { person } = useAuth()
   const { data: events } = useEvents()
   const { data: vendors } = useVendors()
@@ -29,13 +45,15 @@ export function UploadDocumentModal({ opened, onClose }: { opened: boolean; onCl
   const { data: guests } = useGuests()
   const upload = useUploadDocument()
 
+  const hasDefaultContext = !!(defaultEventId || defaultVendorId || defaultExpenseId || defaultGuestId)
+
   const [file, setFile] = useState<File | null>(null)
   const [name, setName] = useState('')
-  const [showMore, setShowMore] = useState(false)
-  const [eventId, setEventId] = useState<string | null>(null)
-  const [vendorId, setVendorId] = useState<string | null>(null)
-  const [expenseId, setExpenseId] = useState<string | null>(null)
-  const [guestId, setGuestId] = useState<string | null>(null)
+  const [showMore, setShowMore] = useState(hasDefaultContext)
+  const [eventId, setEventId] = useState<string | null>(defaultEventId ?? null)
+  const [vendorId, setVendorId] = useState<string | null>(defaultVendorId ?? null)
+  const [expenseId, setExpenseId] = useState<string | null>(defaultExpenseId ?? null)
+  const [guestId, setGuestId] = useState<string | null>(defaultGuestId ?? null)
   const [notes, setNotes] = useState('')
   const [error, setError] = useState<string | null>(null)
 
@@ -53,11 +71,11 @@ export function UploadDocumentModal({ opened, onClose }: { opened: boolean; onCl
   function reset() {
     setFile(null)
     setName('')
-    setShowMore(false)
-    setEventId(null)
-    setVendorId(null)
-    setExpenseId(null)
-    setGuestId(null)
+    setShowMore(hasDefaultContext)
+    setEventId(defaultEventId ?? null)
+    setVendorId(defaultVendorId ?? null)
+    setExpenseId(defaultExpenseId ?? null)
+    setGuestId(defaultGuestId ?? null)
     setNotes('')
     setError(null)
   }

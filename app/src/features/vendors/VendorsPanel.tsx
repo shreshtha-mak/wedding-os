@@ -5,6 +5,7 @@ import {
   Badge,
   Card,
   Center,
+  Divider,
   Group,
   Loader,
   Select,
@@ -19,6 +20,7 @@ import type { AssignmentWithChecklist, VendorWithAssignments } from './api'
 import { AddVendorModal } from './AddVendorModal'
 import { AddAssignmentModal } from './AddAssignmentModal'
 import { AddChecklistItemModal } from './AddChecklistItemModal'
+import { ContextDocuments } from '../documents/ContextDocuments'
 import type { ChecklistItemStatus } from '../../types/database'
 
 const CHECKLIST_STATUSES: ChecklistItemStatus[] = ['Not Started', 'In Progress', 'Done']
@@ -127,6 +129,8 @@ function VendorCard({ vendor }: { vendor: VendorWithAssignments }) {
           </Text>
         )}
       </Stack>
+      <Divider my="sm" />
+      <ContextDocuments vendorId={vendor.id} />
       <AddAssignmentModal vendorId={vendor.id} opened={addAssignmentOpen} onClose={() => setAddAssignmentOpen(false)} />
     </Card>
   )

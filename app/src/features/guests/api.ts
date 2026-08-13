@@ -7,6 +7,7 @@ import type {
   Guest,
   GuestEventAttendance,
   Person,
+  TransportRequirement,
 } from '../../types/database'
 
 export interface AttendanceWithEvent extends GuestEventAttendance {
@@ -206,15 +207,15 @@ export function useUpdateAttendance() {
     mutationFn: async ({
       id,
       status,
-      transportationRequired,
+      transportationStatus,
     }: {
       id: string
       status: AttendanceStatus
-      transportationRequired: boolean
+      transportationStatus: TransportRequirement
     }) => {
       const { error } = await supabase
         .from('guest_event_attendance')
-        .update({ status, transportation_required: transportationRequired })
+        .update({ status, transportation_status: transportationStatus })
         .eq('id', id)
       if (error) throw error
     },

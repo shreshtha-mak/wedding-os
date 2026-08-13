@@ -29,7 +29,7 @@ export function AddVendorModal({ opened, onClose }: { opened: boolean; onClose: 
   const [whatsapp, setWhatsapp] = useState('')
   const [email, setEmail] = useState('')
   const [address, setAddress] = useState('')
-  const [status, setStatus] = useState<VendorStatus>('Considering')
+  const [status, setStatus] = useState<VendorStatus>('Prospect')
   const [notes, setNotes] = useState('')
 
   function reset() {
@@ -41,7 +41,7 @@ export function AddVendorModal({ opened, onClose }: { opened: boolean; onClose: 
     setWhatsapp('')
     setEmail('')
     setAddress('')
-    setStatus('Considering')
+    setStatus('Prospect')
     setNotes('')
   }
 
@@ -106,9 +106,9 @@ export function AddVendorModal({ opened, onClose }: { opened: boolean; onClose: 
             <TextInput label="Address" value={address} onChange={(e) => setAddress(e.currentTarget.value)} />
             <Select
               label="Status"
-              data={['Considering', 'Confirmed', 'Cancelled']}
+              data={['Prospect', 'Shortlisted', 'Confirmed', 'Completed', 'Cancelled']}
               value={status}
-              onChange={(v) => setStatus((v as VendorStatus) ?? 'Considering')}
+              onChange={(v) => setStatus((v as VendorStatus) ?? 'Prospect')}
               allowDeselect={false}
             />
             <Textarea label="Notes" value={notes} onChange={(e) => setNotes(e.currentTarget.value)} autosize minRows={2} />

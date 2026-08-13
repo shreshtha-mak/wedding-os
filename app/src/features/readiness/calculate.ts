@@ -1,8 +1,5 @@
 // Wedding-level readiness — the weighted model from the spec's readiness
-// table, adapted to the entities this build actually has. "Decor" in the
-// original weight table doesn't have its own tracked entity here (no
-// decor table — decor work shows up as Vendor assignments/checklists), so
-// its 12% is folded into Vendors (24% total) rather than left uncomputable.
+// table, adapted to the entities this build actually has.
 //
 // N/A categories (no data yet) are excluded from the weighted average
 // rather than counted as 0% — an empty category isn't "unready," it's just
@@ -44,9 +41,14 @@ export interface ReadinessRawData {
   guestsWithAccommodationAssigned: number
   vendorChecklistStatuses: string[]
   menuStatuses: string[]
-  transportStatuses: string[]
+  // Per attending guest per event, not the standalone operational
+  // transportation log — "Own arrangement"/"Not needed"/"Arranged" all
+  // count as satisfied, "Required"/"Unknown" do not.
+  transportReady: number
+  transportTotal: number
   outfitReadyFlags: boolean[]
   thingStatuses: string[]
+  decorStatuses: string[]
   expenseFinancials: { finalisedAmount: number | null; paid: number }[]
   eventIdsWithTimeline: Set<string>
   totalEventCount: number
@@ -57,10 +59,18 @@ export function computeWeddingReadiness(data: ReadinessRawData): WeddingReadines
   const categories: CategoryReadiness[] = [
     {
       key: 'vendors',
-      label: 'Vendors & Decor',
-      weight: 24,
+      label: 'Vendors',
+      weight: 12,
       readyCount: data.vendorChecklistStatuses.filter((s) => s === 'Done').length,
       totalCount: data.vendorChecklistStatuses.length,
+      percent: null,
+    },
+    {
+      key: 'decor',
+      label: 'Decor',
+      weight: 12,
+      readyCount: data.decorStatuses.filter((s) => s === 'Done').length,
+      totalCount: data.decorStatuses.length,
       percent: null,
     },
     {
@@ -99,8 +109,8 @@ export function computeWeddingReadiness(data: ReadinessRawData): WeddingReadines
       key: 'transportation',
       label: 'Transportation',
       weight: 8,
-      readyCount: data.transportStatuses.filter((s) => s === 'Confirmed' || s === 'Completed').length,
-      totalCount: data.transportStatuses.length,
+      readyCount: data.transportReady,
+      totalCount: data.transportTotal,
       percent: null,
     },
     {

@@ -5,6 +5,7 @@ import { useUpdateExpense } from './api'
 import type { ExpenseWithRelations } from './api'
 import { computeExpenseFinancials } from './finance'
 import { AddPaymentModal } from './AddPaymentModal'
+import { ContextDocuments } from '../documents/ContextDocuments'
 
 function statusColor(status: string): string {
   switch (status) {
@@ -109,6 +110,9 @@ export function ExpenseDetailModal({
         <Button variant="light" onClick={() => setAddPaymentOpen(true)}>
           Add payment
         </Button>
+
+        <Divider my={4} />
+        <ContextDocuments expenseId={expense.id} />
 
         <AddPaymentModal
           expenseId={expense.id}

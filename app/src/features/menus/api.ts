@@ -1,10 +1,43 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../activity/api'
-import type { Menu, MenuInsert, MenuItem, MenuItemInsert, MenuStatus } from '../../types/database'
+import type { Menu, MenuCategory, MenuInsert, MenuItem, MenuItemInsert, MenuStatus } from '../../types/database'
 
 export interface MenuWithItems extends Menu {
-  items: MenuItem[]
+  items: (MenuItem & { category: Pick<MenuCategory, 'id' | 'name'> })[]
+}
+
+export function useMenuCategories() {
+  return useQuery({
+    queryKey: ['menu_categories'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('menu_categories')
+        .select('*')
+        .eq('is_active', true)
+        .order('name')
+      if (error) throw error
+      return data as MenuCategory[]
+    },
+  })
+}
+
+export function useCreateMenuCategory() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ weddingId, name }: { weddingId: string; name: string }) => {
+      const { data, error } = await supabase
+        .from('menu_categories')
+        .insert({ wedding_id: weddingId, name })
+        .select('id')
+        .single()
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['menu_categories'] })
+    },
+  })
 }
 
 export function useMenuForEvent(eventId: string | undefined) {
@@ -14,7 +47,7 @@ export function useMenuForEvent(eventId: string | undefined) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('menus')
-        .select('*, items:menu_items(*)')
+        .select('*, items:menu_items(*, category:menu_categories(id, name))')
         .eq('event_id', eventId as string)
         .maybeSingle()
       if (error) throw error

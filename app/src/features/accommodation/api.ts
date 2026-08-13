@@ -3,10 +3,13 @@ import { supabase } from '../../lib/supabase'
 import { logActivity } from '../activity/api'
 import type {
   AccommodationAssignment,
+  AccommodationBooking,
+  AccommodationBookingInsert,
   AccommodationLocation,
   AccommodationLocationInsert,
   AccommodationRoom,
   AccommodationRoomInsert,
+  Vendor,
 } from '../../types/database'
 
 export interface AssignmentWithGuest extends AccommodationAssignment {
@@ -15,8 +18,12 @@ export interface AssignmentWithGuest extends AccommodationAssignment {
 export interface RoomWithAssignments extends AccommodationRoom {
   assignments: AssignmentWithGuest[]
 }
+export interface BookingWithVendor extends AccommodationBooking {
+  vendor: Pick<Vendor, 'id' | 'name'> | null
+}
 export interface LocationWithRooms extends AccommodationLocation {
   rooms: RoomWithAssignments[]
+  bookings: BookingWithVendor[]
 }
 
 const LOCATION_SELECT = `
@@ -24,7 +31,8 @@ const LOCATION_SELECT = `
   rooms:accommodation_rooms(
     *,
     assignments:accommodation_assignments(*, guest:guests(id, person:people(name)))
-  )
+  ),
+  bookings:accommodation_bookings(*, vendor:vendors(id, name))
 `
 
 export function useAccommodationLocations() {
@@ -65,29 +73,50 @@ export function useCreateRoom() {
   })
 }
 
-export function useAssignGuestToRoom() {
+// Accepts multiple guests in one call so a family sharing a room can be
+// assigned together instead of one guest at a time.
+export function useAssignGuestsToRoom() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async ({
       roomId,
-      guestId,
+      guestIds,
       checkIn,
       checkOut,
     }: {
       roomId: string
-      guestId: string
+      guestIds: string[]
       checkIn: string | null
       checkOut: string | null
-      guestName: string
+      guestNames: string[]
     }) => {
       const { error } = await supabase
         .from('accommodation_assignments')
-        .insert({ room_id: roomId, guest_id: guestId, check_in: checkIn, check_out: checkOut })
+        .insert(guestIds.map((guestId) => ({ room_id: roomId, guest_id: guestId, check_in: checkIn, check_out: checkOut })))
       if (error) throw error
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['accommodation_locations'] })
-      logActivity('accommodation_assignment', null, 'created', `assigned ${variables.guestName} to a room`)
+      logActivity(
+        'accommodation_assignment',
+        null,
+        'created',
+        `assigned ${variables.guestNames.join(', ')} to a room`,
+      )
+    },
+  })
+}
+
+export function useCreateBooking() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (booking: AccommodationBookingInsert) => {
+      const { error } = await supabase.from('accommodation_bookings').insert(booking)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['accommodation_locations'] })
+      logActivity('accommodation_booking', null, 'created', 'added an accommodation booking')
     },
   })
 }

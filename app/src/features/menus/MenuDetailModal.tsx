@@ -12,23 +12,22 @@ import {
   Switch,
   Text,
   TextInput,
+  UnstyledButton,
 } from '@mantine/core'
-import { IconX } from '@tabler/icons-react'
+import { IconPlus, IconX } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthContext'
 import {
   useAddMenuItem,
   useArchiveMenuItem,
   useCreateMenu,
+  useCreateMenuCategory,
+  useMenuCategories,
   useMenuForEvent,
   useUpdateMenuStatus,
 } from './api'
-import type { MenuItemCategory, MenuStatus } from '../../types/database'
+import type { MenuStatus } from '../../types/database'
 
 const STATUSES: MenuStatus[] = ['Draft', 'Discussing', 'Finalised']
-const CATEGORIES: MenuItemCategory[] = [
-  'Welcome drinks', 'Starters', 'Main course', 'Sides', 'Desserts', 'Beverages',
-  'Special requirements', 'Other',
-]
 
 function statusColor(status: MenuStatus): string {
   switch (status) {
@@ -54,14 +53,25 @@ export function MenuDetailModal({
 }) {
   const { person } = useAuth()
   const { data: menu, isLoading, isError } = useMenuForEvent(opened ? eventId : undefined)
+  const { data: categories } = useMenuCategories()
   const createMenu = useCreateMenu()
+  const createCategory = useCreateMenuCategory()
   const updateStatus = useUpdateMenuStatus()
   const addItem = useAddMenuItem()
   const archiveItem = useArchiveMenuItem()
 
   const [itemName, setItemName] = useState('')
-  const [category, setCategory] = useState<MenuItemCategory>('Main course')
+  const [categoryId, setCategoryId] = useState<string | null>(null)
   const [isVegetarian, setIsVegetarian] = useState(false)
+  const [addingCategory, setAddingCategory] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState('')
+
+  useEffect(() => {
+    if (!categoryId && categories && categories.length > 0) {
+      setCategoryId(categories.find((c) => c.name === 'Main course')?.id ?? categories[0].id)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categories])
 
   useEffect(() => {
     // isError guards against retrying forever on a failed fetch, and
@@ -74,10 +84,18 @@ export function MenuDetailModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [opened, isLoading, isError, menu, person])
 
+  async function handleAddCategory() {
+    if (!newCategoryName.trim() || !person) return
+    const created = await createCategory.mutateAsync({ weddingId: person.wedding_id, name: newCategoryName.trim() })
+    setCategoryId(created.id)
+    setNewCategoryName('')
+    setAddingCategory(false)
+  }
+
   async function handleAddItem() {
-    if (!itemName.trim() || !menu) return
+    if (!itemName.trim() || !menu || !categoryId) return
     await addItem.mutateAsync({
-      item: { menu_id: menu.id, item_name: itemName.trim(), category, is_vegetarian: isVegetarian },
+      item: { menu_id: menu.id, item_name: itemName.trim(), category_id: categoryId, is_vegetarian: isVegetarian },
       eventId,
     })
     setItemName('')
@@ -134,7 +152,7 @@ export function MenuDetailModal({
                       </Badge>
                     )}
                     <Text size="xs" c="dimmed">
-                      {item.category}
+                      {item.category.name}
                     </Text>
                   </Group>
                   <ActionIcon
@@ -159,18 +177,44 @@ export function MenuDetailModal({
               />
               <Select
                 w={140}
-                data={CATEGORIES}
-                value={category}
-                onChange={(v) => setCategory((v as MenuItemCategory) ?? 'Other')}
+                data={categories?.map((c) => ({ value: c.id, label: c.name })) ?? []}
+                value={categoryId}
+                onChange={setCategoryId}
                 allowDeselect={false}
               />
             </Group>
+
+            {addingCategory ? (
+              <Group gap="xs" align="flex-end">
+                <TextInput
+                  label="New category"
+                  placeholder="e.g. Live counter"
+                  style={{ flex: 1 }}
+                  autoFocus
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.currentTarget.value)}
+                />
+                <Button size="sm" onClick={handleAddCategory} loading={createCategory.isPending} disabled={!newCategoryName.trim()}>
+                  Add
+                </Button>
+              </Group>
+            ) : (
+              <UnstyledButton onClick={() => setAddingCategory(true)} style={{ alignSelf: 'flex-start' }}>
+                <Group gap={4}>
+                  <IconPlus size={14} />
+                  <Text size="xs" c="dimmed">
+                    New category
+                  </Text>
+                </Group>
+              </UnstyledButton>
+            )}
+
             <Switch
               label="Vegetarian"
               checked={isVegetarian}
               onChange={(e) => setIsVegetarian(e.currentTarget.checked)}
             />
-            <Button onClick={handleAddItem} loading={addItem.isPending} disabled={!itemName.trim()}>
+            <Button onClick={handleAddItem} loading={addItem.isPending} disabled={!itemName.trim() || !categoryId}>
               Add item
             </Button>
           </>

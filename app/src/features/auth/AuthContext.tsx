@@ -9,6 +9,7 @@ interface AuthState {
   loading: boolean
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
+  refreshPerson: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthState | null>(null)
@@ -74,8 +75,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut()
   }
 
+  async function refreshPerson() {
+    if (!session) return
+    const p = await loadPerson(session.user.id)
+    setPerson(p)
+  }
+
   return (
-    <AuthContext.Provider value={{ session, person, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ session, person, loading, signIn, signOut, refreshPerson }}>
       {children}
     </AuthContext.Provider>
   )

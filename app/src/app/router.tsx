@@ -10,6 +10,8 @@ import { EventDetailPage } from '../features/events/EventDetailPage'
 import { MorePage } from '../features/more/MorePage'
 import { ReadinessPage } from '../features/readiness/ReadinessPage'
 import { SearchPage } from '../features/search/SearchPage'
+import { MyProfilePage } from '../features/profile/MyProfilePage'
+import { SettingsPage } from '../features/settings/SettingsPage'
 import { AppLayout } from '../components/layout/AppLayout'
 
 export function AppRoutes() {
@@ -38,6 +40,8 @@ export function AppRoutes() {
         <Route path="/more" element={<MorePage />} />
         <Route path="/readiness" element={<ReadinessPage />} />
         <Route path="/search" element={<SearchPage />} />
+        <Route path="/profile" element={<MyProfilePage />} />
+        <Route path="/settings" element={<SettingsPage />} />
       </Route>
     </Routes>
   )
