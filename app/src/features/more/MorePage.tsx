@@ -3,6 +3,7 @@ import { useAuth } from '../auth/AuthContext'
 import { VendorsPanel } from '../vendors/VendorsPanel'
 import { BudgetPanel } from '../budget/BudgetPanel'
 import { MenusPanel } from '../menus/MenusPanel'
+import { DocumentsPanel } from '../documents/DocumentsPanel'
 
 export function MorePage() {
   const { person } = useAuth()
@@ -26,6 +27,7 @@ export function MorePage() {
         <Tabs.Tab value="vendors">Vendors</Tabs.Tab>
         <Tabs.Tab value="budget">Budget</Tabs.Tab>
         <Tabs.Tab value="menus">Menus</Tabs.Tab>
+        <Tabs.Tab value="documents">Documents</Tabs.Tab>
       </Tabs.List>
 
       <Tabs.Panel value="vendors">
@@ -36,6 +38,9 @@ export function MorePage() {
       </Tabs.Panel>
       <Tabs.Panel value="menus">
         <MenusPanel />
+      </Tabs.Panel>
+      <Tabs.Panel value="documents">
+        <DocumentsPanel />
       </Tabs.Panel>
     </Tabs>
   )

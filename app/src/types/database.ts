@@ -1169,6 +1169,84 @@ export interface Database {
           },
         ]
       }
+      documents: {
+        Row: {
+          id: string
+          wedding_id: string
+          name: string
+          storage_path: string
+          file_type: string | null
+          file_size: number | null
+          event_id: string | null
+          vendor_id: string | null
+          expense_id: string | null
+          guest_id: string | null
+          task_id: string | null
+          uploaded_by: string | null
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          wedding_id: string
+          name: string
+          storage_path: string
+          file_type?: string | null
+          file_size?: number | null
+          event_id?: string | null
+          vendor_id?: string | null
+          expense_id?: string | null
+          guest_id?: string | null
+          task_id?: string | null
+          uploaded_by?: string | null
+          notes?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['documents']['Insert']>
+        Relationships: [
+          {
+            foreignKeyName: 'documents_wedding_id_fkey'
+            columns: ['wedding_id']
+            isOneToOne: false
+            referencedRelation: 'weddings'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'documents_event_id_fkey'
+            columns: ['event_id']
+            isOneToOne: false
+            referencedRelation: 'events'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'documents_vendor_id_fkey'
+            columns: ['vendor_id']
+            isOneToOne: false
+            referencedRelation: 'vendors'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'documents_expense_id_fkey'
+            columns: ['expense_id']
+            isOneToOne: false
+            referencedRelation: 'expenses'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'documents_guest_id_fkey'
+            columns: ['guest_id']
+            isOneToOne: false
+            referencedRelation: 'guests'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'documents_task_id_fkey'
+            columns: ['task_id']
+            isOneToOne: false
+            referencedRelation: 'tasks'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       activity_log: {
         Row: {
           id: string
@@ -1268,3 +1346,5 @@ export type Expense = Database['public']['Tables']['expenses']['Row']
 export type ExpenseInsert = Database['public']['Tables']['expenses']['Insert']
 export type Payment = Database['public']['Tables']['payments']['Row']
 export type PaymentInsert = Database['public']['Tables']['payments']['Insert']
+export type WeddingDocument = Database['public']['Tables']['documents']['Row']
+export type WeddingDocumentInsert = Database['public']['Tables']['documents']['Insert']
