@@ -148,6 +148,7 @@ export function EventDetailPage() {
       {canManage && (
         <AddTimelineItemModal
           eventId={event.id}
+          eventName={event.name}
           opened={addTimelineOpen}
           onClose={() => setAddTimelineOpen(false)}
         />

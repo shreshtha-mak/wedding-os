@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useTasks } from '../tasks/api'
 import { dueIndicator, dueIndicatorColor } from '../tasks/taskStatus'
+import { useRecentActivity } from '../activity/api'
 import { useEvents, useWedding } from '../../lib/queries'
 
 function Countdown({ startDate, name }: { startDate: string | null; name: string }) {
@@ -108,6 +109,41 @@ function MyTasks() {
   )
 }
 
+function RecentActivity() {
+  const { data: activity, isLoading } = useRecentActivity(6)
+
+  return (
+    <Card withBorder radius="md" p="lg">
+      <Title order={4} mb="sm">
+        Recent Activity
+      </Title>
+      {isLoading && (
+        <Center py="md">
+          <Loader size="sm" />
+        </Center>
+      )}
+      {!isLoading && activity?.length === 0 && (
+        <Text c="dimmed" size="sm">
+          Nothing logged yet.
+        </Text>
+      )}
+      <Stack gap={6}>
+        {activity?.map((entry) => (
+          <Text key={entry.id} size="sm">
+            <Text span fw={500}>
+              {entry.actor?.name ?? 'Someone'}
+            </Text>{' '}
+            {entry.summary}{' '}
+            <Text span size="xs" c="dimmed">
+              · {dayjs(entry.created_at).fromNow()}
+            </Text>
+          </Text>
+        ))}
+      </Stack>
+    </Card>
+  )
+}
+
 export function HomePage() {
   const { person } = useAuth()
   const { data: wedding } = useWedding()
@@ -118,6 +154,7 @@ export function HomePage() {
       {wedding && <Countdown startDate={wedding.start_date} name={wedding.name} />}
       <MyTasks />
       <UpcomingEvents />
+      <RecentActivity />
     </Stack>
   )
 }

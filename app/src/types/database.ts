@@ -306,6 +306,36 @@ export interface Database {
           },
         ]
       }
+      activity_log: {
+        Row: {
+          id: string
+          wedding_id: string
+          actor_person_id: string | null
+          entity_type: string
+          entity_id: string | null
+          action: string
+          summary: string
+          created_at: string
+        }
+        Insert: never
+        Update: never
+        Relationships: [
+          {
+            foreignKeyName: 'activity_log_wedding_id_fkey'
+            columns: ['wedding_id']
+            isOneToOne: false
+            referencedRelation: 'weddings'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'activity_log_actor_person_id_fkey'
+            columns: ['actor_person_id']
+            isOneToOne: false
+            referencedRelation: 'people'
+            referencedColumns: ['id']
+          },
+        ]
+      }
     }
     Views: Record<string, never>
     Functions: {
@@ -315,6 +345,15 @@ export interface Database {
       }
       link_user_account: {
         Args: { target_person_id: string; target_email: string }
+        Returns: void
+      }
+      log_activity: {
+        Args: {
+          p_entity_type: string
+          p_entity_id: string | null
+          p_action: string
+          p_summary: string
+        }
         Returns: void
       }
     }
@@ -330,3 +369,4 @@ export type Task = Database['public']['Tables']['tasks']['Row']
 export type TaskInsert = Database['public']['Tables']['tasks']['Insert']
 export type TimelineItem = Database['public']['Tables']['timeline_items']['Row']
 export type TimelineItemInsert = Database['public']['Tables']['timeline_items']['Insert']
+export type ActivityLogEntry = Database['public']['Tables']['activity_log']['Row']

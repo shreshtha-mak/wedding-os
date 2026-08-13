@@ -23,7 +23,7 @@ export function TaskItem({ task }: { task: TaskWithRelations }) {
         checked={isCompleted}
         disabled={isCompleted || completeTask.isPending}
         onChange={() => {
-          if (person) completeTask.mutate({ id: task.id, completedBy: person.id })
+          if (person) completeTask.mutate({ id: task.id, completedBy: person.id, taskName: task.name })
         }}
         aria-label={`Complete ${task.name}`}
       />

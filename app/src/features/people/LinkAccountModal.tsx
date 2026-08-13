@@ -25,7 +25,7 @@ export function LinkAccountModal({
     if (!person || !email.trim()) return
     setError(null)
     try {
-      await linkAccount.mutateAsync({ personId: person.id, email: email.trim() })
+      await linkAccount.mutateAsync({ personId: person.id, email: email.trim(), personName: person.name })
       handleClose()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not link that account.')

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
+import { logActivity } from '../activity/api'
 import type { Person, RoleId } from '../../types/database'
 
 export interface PersonWithAccount extends Person {
@@ -51,11 +52,13 @@ export function useCreatePerson() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (person: CreatePersonInput) => {
-      const { error } = await supabase.from('people').insert(person)
+      const { data, error } = await supabase.from('people').insert(person).select('id').single()
       if (error) throw error
+      return data
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['people'] })
+      logActivity('person', data.id, 'created', `added ${variables.name} to People`)
     },
   })
 }
@@ -63,15 +66,23 @@ export function useCreatePerson() {
 export function useLinkUserAccount() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ personId, email }: { personId: string; email: string }) => {
+    mutationFn: async ({
+      personId,
+      email,
+    }: {
+      personId: string
+      email: string
+      personName: string
+    }) => {
       const { error } = await supabase.rpc('link_user_account', {
         target_person_id: personId,
         target_email: email,
       })
       if (error) throw error
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['people'] })
+      logActivity('person', variables.personId, 'linked', `linked a login for ${variables.personName}`)
     },
   })
 }

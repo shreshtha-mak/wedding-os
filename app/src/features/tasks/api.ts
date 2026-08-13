@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
+import { logActivity } from '../activity/api'
 import type { EventRow, Person, Task, TaskCategory, TaskInsert } from '../../types/database'
 
 export interface TaskWithRelations extends Task {
@@ -56,11 +57,13 @@ export function useCreateTask() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (task: TaskInsert) => {
-      const { error } = await supabase.from('tasks').insert(task)
+      const { data, error } = await supabase.from('tasks').insert(task).select('id').single()
       if (error) throw error
+      return data
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      logActivity('task', data.id, 'created', `added task "${variables.name}"`)
     },
   })
 }
@@ -68,15 +71,16 @@ export function useCreateTask() {
 export function useCompleteTask() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, completedBy }: { id: string; completedBy: string }) => {
+    mutationFn: async ({ id, completedBy }: { id: string; completedBy: string; taskName: string }) => {
       const { error } = await supabase
         .from('tasks')
         .update({ status: 'Completed', completed_by: completedBy })
         .eq('id', id)
       if (error) throw error
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      logActivity('task', variables.id, 'completed', `completed "${variables.taskName}"`)
     },
   })
 }

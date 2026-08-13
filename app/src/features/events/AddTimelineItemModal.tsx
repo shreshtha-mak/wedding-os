@@ -25,10 +25,12 @@ const TYPES: TimelineItemType[] = [
 
 export function AddTimelineItemModal({
   eventId,
+  eventName,
   opened,
   onClose,
 }: {
   eventId: string
+  eventName: string
   opened: boolean
   onClose: () => void
 }) {
@@ -59,15 +61,18 @@ export function AddTimelineItemModal({
   async function handleSubmit() {
     if (!activity.trim() || !person) return
     await createItem.mutateAsync({
-      wedding_id: person.wedding_id,
-      event_id: eventId,
-      activity: activity.trim(),
-      start_time: startTime || null,
-      end_time: endTime || null,
-      type,
-      location: location.trim() || null,
-      responsible_person_id: responsiblePersonId,
-      notes: notes.trim() || null,
+      eventName,
+      item: {
+        wedding_id: person.wedding_id,
+        event_id: eventId,
+        activity: activity.trim(),
+        start_time: startTime || null,
+        end_time: endTime || null,
+        type,
+        location: location.trim() || null,
+        responsible_person_id: responsiblePersonId,
+        notes: notes.trim() || null,
+      },
     })
     reset()
     onClose()

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
+import { logActivity } from '../activity/api'
 import type { Person, TaskStatus, TimelineItem, TimelineItemInsert } from '../../types/database'
 
 export interface TimelineItemWithPerson extends TimelineItem {
@@ -25,12 +26,18 @@ export function useEventTimeline(eventId: string | undefined) {
 export function useCreateTimelineItem() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (item: TimelineItemInsert) => {
+    mutationFn: async ({ item }: { item: TimelineItemInsert; eventName: string }) => {
       const { error } = await supabase.from('timeline_items').insert(item)
       if (error) throw error
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['timeline_items', variables.event_id] })
+      queryClient.invalidateQueries({ queryKey: ['timeline_items', variables.item.event_id] })
+      logActivity(
+        'timeline_item',
+        null,
+        'created',
+        `added "${variables.item.activity}" to ${variables.eventName} timeline`,
+      )
     },
   })
 }
