@@ -8,6 +8,8 @@ import { PeopleHubPage } from '../features/people/PeopleHubPage'
 import { EventsPage } from '../features/events/EventsPage'
 import { EventDetailPage } from '../features/events/EventDetailPage'
 import { MorePage } from '../features/more/MorePage'
+import { ReadinessPage } from '../features/readiness/ReadinessPage'
+import { SearchPage } from '../features/search/SearchPage'
 import { AppLayout } from '../components/layout/AppLayout'
 
 export function AppRoutes() {
@@ -34,6 +36,8 @@ export function AppRoutes() {
         <Route path="/planning" element={<PlanningPage />} />
         <Route path="/people" element={<PeopleHubPage />} />
         <Route path="/more" element={<MorePage />} />
+        <Route path="/readiness" element={<ReadinessPage />} />
+        <Route path="/search" element={<SearchPage />} />
       </Route>
     </Routes>
   )

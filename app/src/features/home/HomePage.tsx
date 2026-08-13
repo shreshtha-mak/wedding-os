@@ -1,4 +1,5 @@
 import { Badge, Card, Center, Group, Loader, Stack, Text, Title, UnstyledButton } from '@mantine/core'
+import { IconAlertTriangle, IconSearch } from '@tabler/icons-react'
 import dayjs from 'dayjs'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
@@ -8,6 +9,11 @@ import { useRecentActivity } from '../activity/api'
 import { useDecisions } from '../decisions/api'
 import { useChallenges } from '../challenges/api'
 import { useCalendarItems } from '../calendar/api'
+import { useThings } from '../things/api'
+import { useOutfits } from '../outfits/api'
+import { useWeddingReadinessData, useNeedsAttentionData } from '../readiness/api'
+import { computeWeddingReadiness, readinessLevelColor, readinessLevelLabel } from '../readiness/calculate'
+import { computeNeedsAttention } from '../readiness/needsAttention'
 import { useEvents, useWedding } from '../../lib/queries'
 
 function Countdown({ startDate, name }: { startDate: string | null; name: string }) {
@@ -28,6 +34,72 @@ function Countdown({ startDate, name }: { startDate: string | null; name: string
       <Text size="sm" c="dimmed">
         {dayjs(startDate).format('DD MMM YYYY')}
       </Text>
+    </Card>
+  )
+}
+
+function ReadinessCard() {
+  const navigate = useNavigate()
+  const { data, isLoading } = useWeddingReadinessData(true)
+  const readiness = data ? computeWeddingReadiness(data) : null
+
+  return (
+    <UnstyledButton onClick={() => navigate('/readiness')}>
+      <Card withBorder radius="md" p="lg">
+        <Group justify="space-between">
+          <div>
+            <Text size="sm" c="dimmed">
+              Wedding Readiness
+            </Text>
+            {isLoading || !readiness ? (
+              <Loader size="sm" mt={4} />
+            ) : (
+              <Title order={2}>{readiness.overallPercent ?? '—'}%</Title>
+            )}
+          </div>
+          {readiness && (
+            <Badge color={readinessLevelColor(readiness.level)} variant="light">
+              {readinessLevelLabel(readiness.level)}
+            </Badge>
+          )}
+        </Group>
+      </Card>
+    </UnstyledButton>
+  )
+}
+
+function NeedsAttentionCard() {
+  const { data, isLoading } = useNeedsAttentionData(true)
+  const items = data ? computeNeedsAttention(data).slice(0, 5) : []
+
+  if (!isLoading && items.length === 0) return null
+
+  return (
+    <Card withBorder radius="md" p="lg">
+      <Title order={4} mb="sm">
+        Needs Attention
+      </Title>
+      {isLoading && (
+        <Center py="md">
+          <Loader size="sm" />
+        </Center>
+      )}
+      <Stack gap="xs">
+        {items.map((item) => (
+          <Group key={item.id} gap={6} wrap="nowrap">
+            <IconAlertTriangle
+              size={14}
+              color={item.severity === 'critical' ? 'var(--mantine-color-red-6)' : 'var(--mantine-color-yellow-6)'}
+            />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <Text size="sm">{item.label}</Text>
+              <Text size="xs" c="dimmed">
+                {item.sublabel}
+              </Text>
+            </div>
+          </Group>
+        ))}
+      </Stack>
     </Card>
   )
 }
@@ -73,32 +145,53 @@ function UpcomingEvents() {
   )
 }
 
-function MyTasks() {
+// "My Things" — broader than just tasks: pulls together everything
+// personally assigned to the current user across modules (spec: "What
+// specifically needs my attention?" — distinct from any module's own full
+// list).
+function MyThings() {
   const { person } = useAuth()
-  const { data: tasks, isLoading } = useTasks('mine', person?.id)
-  const pending = tasks?.filter((t) => t.status !== 'Completed').slice(0, 5)
+  const { data: tasks, isLoading: tasksLoading } = useTasks('mine', person?.id)
+  const { data: things, isLoading: thingsLoading } = useThings('mine', person?.id)
+  const { data: outfits, isLoading: outfitsLoading } = useOutfits()
+  const { data: decisions, isLoading: decisionsLoading } = useDecisions('mine', person?.id)
+  const { data: challenges, isLoading: challengesLoading } = useChallenges('mine', person?.id)
+
+  const isLoading = tasksLoading || thingsLoading || outfitsLoading || decisionsLoading || challengesLoading
+
+  const pendingTasks = (tasks ?? []).filter((t) => t.status !== 'Completed')
+  const pendingThings = (things ?? []).filter((t) => t.status !== 'Packed' && t.status !== 'At Venue' && t.status !== 'Returned')
+  const pendingOutfits = (outfits ?? []).filter(
+    (o) => !o.is_ready && (o.person_id === person?.id || o.responsible_person_id === person?.id),
+  )
+  const pendingDecisions = (decisions ?? []).filter((d) => d.status === 'Pending')
+  const openChallenges = (challenges ?? []).filter((c) => c.status !== 'Resolved')
+
+  const total = pendingTasks.length + pendingThings.length + pendingOutfits.length + pendingDecisions.length + openChallenges.length
 
   return (
     <Card withBorder radius="md" p="lg">
       <Title order={4} mb="sm">
-        My Tasks
+        My Things
       </Title>
       {isLoading && (
         <Center py="md">
           <Loader size="sm" />
         </Center>
       )}
-      {!isLoading && pending?.length === 0 && (
+      {!isLoading && total === 0 && (
         <Text c="dimmed" size="sm">
           Nothing pending — you're all caught up.
         </Text>
       )}
       <Stack gap="xs">
-        {pending?.map((t) => {
+        {pendingTasks.slice(0, 4).map((t) => {
           const indicator = dueIndicator(t)
           return (
             <Group key={t.id} justify="space-between" wrap="nowrap">
-              <Text style={{ flex: 1 }}>{t.name}</Text>
+              <Text size="sm" style={{ flex: 1 }}>
+                {t.name}
+              </Text>
               {indicator && (
                 <Badge size="xs" color={dueIndicatorColor(indicator)} variant="light">
                   {indicator}
@@ -107,6 +200,46 @@ function MyTasks() {
             </Group>
           )
         })}
+        {pendingOutfits.slice(0, 2).map((o) => (
+          <Group key={o.id} justify="space-between" wrap="nowrap">
+            <Text size="sm" style={{ flex: 1 }}>
+              {o.person.name}'s {o.event.name} outfit
+            </Text>
+            <Badge size="xs" color="gray" variant="light">
+              {o.outfit_status}
+            </Badge>
+          </Group>
+        ))}
+        {pendingThings.slice(0, 2).map((t) => (
+          <Group key={t.id} justify="space-between" wrap="nowrap">
+            <Text size="sm" style={{ flex: 1 }}>
+              {t.item_name}
+            </Text>
+            <Badge size="xs" color="gray" variant="light">
+              {t.status}
+            </Badge>
+          </Group>
+        ))}
+        {pendingDecisions.slice(0, 2).map((d) => (
+          <Group key={d.id} justify="space-between" wrap="nowrap">
+            <Text size="sm" style={{ flex: 1 }}>
+              {d.question}
+            </Text>
+            <Badge size="xs" color="blue" variant="light">
+              Decision
+            </Badge>
+          </Group>
+        ))}
+        {openChallenges.slice(0, 2).map((c) => (
+          <Group key={c.id} justify="space-between" wrap="nowrap">
+            <Text size="sm" style={{ flex: 1 }}>
+              {c.title}
+            </Text>
+            <Badge size="xs" color={priorityColor(c.priority)} variant="light">
+              {c.priority}
+            </Badge>
+          </Group>
+        ))}
       </Stack>
     </Card>
   )
@@ -271,14 +404,23 @@ function RecentActivity() {
 }
 
 export function HomePage() {
+  const navigate = useNavigate()
   const { person } = useAuth()
   const { data: wedding } = useWedding()
+  const canSeeReadiness = person?.role_id === 'admin' || person?.role_id === 'organiser'
 
   return (
     <Stack p="md" pb={96} gap="md">
-      <Title order={2}>Hi {person?.name?.split(' ')[0] ?? ''}</Title>
+      <Group justify="space-between">
+        <Title order={2}>Hi {person?.name?.split(' ')[0] ?? ''}</Title>
+        <UnstyledButton onClick={() => navigate('/search')} aria-label="Search">
+          <IconSearch size={22} />
+        </UnstyledButton>
+      </Group>
       {wedding && <Countdown startDate={wedding.start_date} name={wedding.name} />}
-      <MyTasks />
+      {canSeeReadiness && <ReadinessCard />}
+      {canSeeReadiness && <NeedsAttentionCard />}
+      <MyThings />
       <UpcomingEvents />
       <CompactCalendar />
       <DecisionsCard />
