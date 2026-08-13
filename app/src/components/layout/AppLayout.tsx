@@ -69,7 +69,7 @@ export function AppLayout() {
                 gap: 2,
                 padding: '10px 0',
                 color: active
-                  ? 'var(--mantine-color-blue-6)'
+                  ? 'var(--mantine-color-accent-6)'
                   : 'var(--mantine-color-dimmed)',
               }}
             >

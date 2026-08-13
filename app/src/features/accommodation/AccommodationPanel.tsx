@@ -83,7 +83,7 @@ function RoomRow({ room }: { room: RoomWithAssignments }) {
             </Badge>
             {!full && (
               <UnstyledButton onClick={() => setAssignOpen(true)}>
-                <Text size="xs" c="blue">
+                <Text size="xs" c="accent">
                   + Assign
                 </Text>
               </UnstyledButton>
@@ -173,12 +173,12 @@ export function AccommodationPanel() {
             </div>
             <Group gap="sm">
               <UnstyledButton onClick={() => setAddBookingFor(location.id)}>
-                <Text size="xs" c="blue">
+                <Text size="xs" c="accent">
                   + Booking
                 </Text>
               </UnstyledButton>
               <UnstyledButton onClick={() => setAddRoomFor(location.id)}>
-                <Text size="xs" c="blue">
+                <Text size="xs" c="accent">
                   + Room
                 </Text>
               </UnstyledButton>

@@ -16,25 +16,31 @@ import { getCurrentEventState } from '../wedding-day/calculate'
 import { WeddingDayView } from '../wedding-day/WeddingDayView'
 import { useEvents, useWedding } from '../../lib/queries'
 
+// The one deliberately expressive element on Home (design system §30): a
+// serif display number rather than the same card treatment as everything
+// else, so it reads as a moment rather than another dashboard widget.
 function Countdown({ startDate, name }: { startDate: string | null; name: string }) {
   if (!startDate) return null
   const days = dayjs(startDate).startOf('day').diff(dayjs().startOf('day'), 'day')
 
-  let label: string
-  if (days > 0) label = `${days} day${days === 1 ? '' : 's'} to go`
-  else if (days === 0) label = 'Today!'
-  else label = 'Underway'
+  const value = days > 0 ? String(days) : days === 0 ? 'Today' : 'Underway'
+  const caption = days > 0 ? (days === 1 ? 'DAY TO GO' : 'DAYS TO GO') : name.toUpperCase()
 
   return (
-    <Card withBorder radius="md" p="lg">
+    <Stack gap={2} align="center" py="md">
       <Text size="sm" c="dimmed">
         {name}
       </Text>
-      <Title order={2}>{label}</Title>
-      <Text size="sm" c="dimmed">
+      <Text style={{ fontFamily: "'DM Serif Display', serif", fontSize: 32, fontWeight: 400, lineHeight: 1.1 }}>
+        {value}
+      </Text>
+      <Text fz={11} fw={600} c="dimmed" tt="uppercase" style={{ letterSpacing: '0.08em' }}>
+        {caption}
+      </Text>
+      <Text size="xs" c="dimmed" mt={4}>
         {dayjs(startDate).format('DD MMM YYYY')}
       </Text>
-    </Card>
+    </Stack>
   )
 }
 
@@ -417,7 +423,7 @@ export function HomePage() {
             <IconSearch size={22} />
           </UnstyledButton>
           <UnstyledButton onClick={() => navigate('/profile')} aria-label="My Profile">
-            <Avatar radius="xl" size={30} color="rose">
+            <Avatar radius="xl" size={30} color="accent">
               {person?.name?.[0]?.toUpperCase() ?? '?'}
             </Avatar>
           </UnstyledButton>

@@ -16,9 +16,8 @@ export default defineConfig({
         name: 'Wedding OS',
         short_name: 'Wedding OS',
         description: 'Private family wedding command centre',
-        // Placeholder brand color — swap once visual design is decided (spec §43).
-        theme_color: '#b76e79',
-        background_color: '#ffffff',
+        theme_color: '#8A6F5A',
+        background_color: '#F8F7F4',
         display: 'standalone',
         start_url: '/wedding-os/',
         scope: '/wedding-os/',
@@ -31,7 +30,7 @@ export default defineConfig({
       workbox: {
         // App is behind auth and shows live data — cache the shell only,
         // never API responses, so users always see current data when online.
-        globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
       },
     }),
   ],

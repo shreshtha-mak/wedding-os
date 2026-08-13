@@ -76,7 +76,7 @@ function AssignmentBlock({ assignment }: { assignment: AssignmentWithChecklist }
         </Group>
       ))}
       <UnstyledButton onClick={() => setAddChecklistOpen(true)} pl="sm">
-        <Text size="xs" c="blue">
+        <Text size="xs" c="accent">
           + Checklist item
         </Text>
       </UnstyledButton>
@@ -114,7 +114,7 @@ function VendorCard({ vendor }: { vendor: VendorWithAssignments }) {
           )}
         </div>
         <UnstyledButton onClick={() => setAddAssignmentOpen(true)}>
-          <Text size="xs" c="blue">
+          <Text size="xs" c="accent">
             + Event
           </Text>
         </UnstyledButton>

@@ -47,7 +47,7 @@ export function MyProfilePage() {
       </Group>
 
       <Group>
-        <Avatar radius="xl" size={56} color="rose">
+        <Avatar radius="xl" size={56} color="accent">
           {initials}
         </Avatar>
         <div>

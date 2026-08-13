@@ -181,7 +181,7 @@ export function WeddingDayView({ state }: { state: CurrentEventState }) {
 
   return (
     <Stack gap="md">
-      <Card withBorder radius="md" p="lg" style={{ background: 'var(--mantine-color-blue-light)' }}>
+      <Card withBorder radius="md" p="lg" style={{ background: 'var(--mantine-color-accent-light)' }}>
         <Text size="sm" c="dimmed">
           {event.day_label}
         </Text>
