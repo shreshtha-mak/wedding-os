@@ -155,6 +155,51 @@ export function useUpdateGuest() {
   })
 }
 
+export interface AttendanceWithGuestName {
+  id: string
+  status: AttendanceStatus
+  arrived: boolean
+  guestId: string
+  guestName: string
+}
+
+export function useAttendanceForEvent(eventId: string | undefined) {
+  return useQuery({
+    queryKey: ['guest_event_attendance', 'event', eventId],
+    enabled: !!eventId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('guest_event_attendance')
+        .select('id, status, arrived, guest_id, guest:guests(person:people(name))')
+        .eq('event_id', eventId as string)
+        .eq('status', 'Attending')
+      if (error) throw error
+      return (data as unknown as { id: string; status: AttendanceStatus; arrived: boolean; guest_id: string; guest: { person: { name: string } } }[]).map(
+        (row) => ({
+          id: row.id,
+          status: row.status,
+          arrived: row.arrived,
+          guestId: row.guest_id,
+          guestName: row.guest.person.name,
+        }),
+      )
+    },
+  })
+}
+
+export function useMarkArrived() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, arrived }: { id: string; arrived: boolean; eventId: string }) => {
+      const { error } = await supabase.from('guest_event_attendance').update({ arrived }).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['guest_event_attendance', 'event', variables.eventId] })
+    },
+  })
+}
+
 export function useUpdateAttendance() {
   const queryClient = useQueryClient()
   return useMutation({

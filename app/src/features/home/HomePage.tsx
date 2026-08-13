@@ -14,6 +14,8 @@ import { useOutfits } from '../outfits/api'
 import { useWeddingReadinessData, useNeedsAttentionData } from '../readiness/api'
 import { computeWeddingReadiness, readinessLevelColor, readinessLevelLabel } from '../readiness/calculate'
 import { computeNeedsAttention } from '../readiness/needsAttention'
+import { getCurrentEventState } from '../wedding-day/calculate'
+import { WeddingDayView } from '../wedding-day/WeddingDayView'
 import { useEvents, useWedding } from '../../lib/queries'
 
 function Countdown({ startDate, name }: { startDate: string | null; name: string }) {
@@ -407,7 +409,13 @@ export function HomePage() {
   const navigate = useNavigate()
   const { person } = useAuth()
   const { data: wedding } = useWedding()
+  const { data: events } = useEvents()
   const canSeeReadiness = person?.role_id === 'admin' || person?.role_id === 'organiser'
+
+  // Automatic — no manual "enter wedding day mode" toggle (spec: "the user
+  // should not need to manually switch modes"). Whenever today is an event
+  // day, Home's hierarchy flips from planning-mode to what's-happening-now.
+  const currentEventState = events ? getCurrentEventState(events) : null
 
   return (
     <Stack p="md" pb={96} gap="md">
@@ -417,14 +425,21 @@ export function HomePage() {
           <IconSearch size={22} />
         </UnstyledButton>
       </Group>
-      {wedding && <Countdown startDate={wedding.start_date} name={wedding.name} />}
-      {canSeeReadiness && <ReadinessCard />}
-      {canSeeReadiness && <NeedsAttentionCard />}
-      <MyThings />
-      <UpcomingEvents />
-      <CompactCalendar />
-      <DecisionsCard />
-      <ChallengesCard />
+
+      {currentEventState ? (
+        <WeddingDayView state={currentEventState} />
+      ) : (
+        <>
+          {wedding && <Countdown startDate={wedding.start_date} name={wedding.name} />}
+          {canSeeReadiness && <ReadinessCard />}
+          {canSeeReadiness && <NeedsAttentionCard />}
+          <MyThings />
+          <UpcomingEvents />
+          <CompactCalendar />
+          <DecisionsCard />
+          <ChallengesCard />
+        </>
+      )}
       <RecentActivity />
     </Stack>
   )

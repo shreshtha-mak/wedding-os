@@ -526,6 +526,7 @@ export interface Database {
           status: AttendanceStatus
           num_attending: number
           transportation_required: boolean
+          arrived: boolean
           notes: string | null
           created_at: string
           updated_at: string
@@ -537,6 +538,7 @@ export interface Database {
           status?: AttendanceStatus
           num_attending?: number
           transportation_required?: boolean
+          arrived?: boolean
           notes?: string | null
         }
         Update: Partial<Database['public']['Tables']['guest_event_attendance']['Insert']>
