@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useWeddingReadinessData } from './api'
 import { computeWeddingReadiness, readinessLevelColor, readinessLevelLabel } from './calculate'
+import { ReadinessLevelIcon } from './StatusIcon'
 
 export function ReadinessPage() {
   const navigate = useNavigate()
@@ -47,7 +48,12 @@ export function ReadinessPage() {
           <Card withBorder radius="md" p="lg">
             <Group justify="space-between">
               <Title order={1}>{readiness.overallPercent ?? '—'}%</Title>
-              <Badge size="lg" color={readinessLevelColor(readiness.level)} variant="light">
+              <Badge
+                size="lg"
+                color={readinessLevelColor(readiness.level)}
+                variant="light"
+                leftSection={<ReadinessLevelIcon level={readiness.level} />}
+              >
                 {readinessLevelLabel(readiness.level)}
               </Badge>
             </Group>

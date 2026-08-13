@@ -11,32 +11,38 @@ import { useChallenges } from '../challenges/api'
 import { useCalendarItems } from '../calendar/api'
 import { useWeddingReadinessData, useNeedsAttentionData } from '../readiness/api'
 import { computeWeddingReadiness, readinessLevelColor, readinessLevelLabel } from '../readiness/calculate'
+import { ReadinessLevelIcon } from '../readiness/StatusIcon'
 import { computeNeedsAttention } from '../readiness/needsAttention'
 import { getCurrentEventState } from '../wedding-day/calculate'
 import { WeddingDayView } from '../wedding-day/WeddingDayView'
 import { useEvents, useWedding } from '../../lib/queries'
 
-// The one deliberately expressive element on Home (design system §30): a
-// serif display number rather than the same card treatment as everything
+// The one deliberately prominent element on Home (design system §47): large
+// bold navy typography rather than the same card treatment as everything
 // else, so it reads as a moment rather than another dashboard widget.
 function Countdown({ startDate, name }: { startDate: string | null; name: string }) {
   if (!startDate) return null
   const days = dayjs(startDate).startOf('day').diff(dayjs().startOf('day'), 'day')
-
-  const value = days > 0 ? String(days) : days === 0 ? 'Today' : 'Underway'
-  const caption = days > 0 ? (days === 1 ? 'DAY TO GO' : 'DAYS TO GO') : name.toUpperCase()
 
   return (
     <Stack gap={2} align="center" py="md">
       <Text size="sm" c="dimmed">
         {name}
       </Text>
-      <Text style={{ fontFamily: "'DM Serif Display', serif", fontSize: 32, fontWeight: 400, lineHeight: 1.1 }}>
-        {value}
-      </Text>
-      <Text fz={11} fw={600} c="dimmed" tt="uppercase" style={{ letterSpacing: '0.08em' }}>
-        {caption}
-      </Text>
+      {days > 0 ? (
+        <>
+          <Text fz={36} fw={700} c="accent.6" style={{ lineHeight: 1.1 }}>
+            {days} {days === 1 ? 'DAY' : 'DAYS'}
+          </Text>
+          <Text fz={13} fw={700} c="accent.6" tt="uppercase" style={{ letterSpacing: '0.06em' }}>
+            To go
+          </Text>
+        </>
+      ) : (
+        <Text fz={28} fw={700} c="accent.6" tt="uppercase" style={{ letterSpacing: '0.04em' }}>
+          {days === 0 ? 'Today' : 'Wedding complete'}
+        </Text>
+      )}
       <Text size="xs" c="dimmed" mt={4}>
         {dayjs(startDate).format('DD MMM YYYY')}
       </Text>
@@ -68,7 +74,11 @@ function ReadinessCard() {
             )}
           </div>
           {readiness && (
-            <Badge color={readinessLevelColor(readiness.level)} variant="light">
+            <Badge
+              color={readinessLevelColor(readiness.level)}
+              variant="light"
+              leftSection={<ReadinessLevelIcon level={readiness.level} size={12} />}
+            >
               {readinessLevelLabel(readiness.level)}
             </Badge>
           )}

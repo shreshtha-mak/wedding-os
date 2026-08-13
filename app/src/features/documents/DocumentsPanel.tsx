@@ -9,6 +9,7 @@ import {
   Stack,
   Text,
   Title,
+  Tooltip,
   UnstyledButton,
 } from '@mantine/core'
 import { IconFile, IconPlus, IconTrash } from '@tabler/icons-react'
@@ -74,9 +75,11 @@ function DocumentRow({ doc }: { doc: DocumentWithRelations }) {
           </Stack>
         </Group>
       </UnstyledButton>
-      <ActionIcon variant="subtle" color="red" onClick={handleDelete} aria-label={`Delete ${doc.name}`}>
-        <IconTrash size={16} />
-      </ActionIcon>
+      <Tooltip label="Delete">
+        <ActionIcon variant="subtle" color="red" onClick={handleDelete} aria-label={`Delete ${doc.name}`}>
+          <IconTrash size={16} />
+        </ActionIcon>
+      </Tooltip>
     </Group>
   )
 }
