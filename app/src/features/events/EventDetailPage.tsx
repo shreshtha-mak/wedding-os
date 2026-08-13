@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import {
   ActionIcon,
+  Alert,
   Badge,
   Card,
   Center,
@@ -11,7 +12,7 @@ import {
   Title,
   UnstyledButton,
 } from '@mantine/core'
-import { IconArrowLeft, IconPlus } from '@tabler/icons-react'
+import { IconAlertTriangle, IconArrowLeft, IconPlus } from '@tabler/icons-react'
 import dayjs from 'dayjs'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
@@ -53,14 +54,17 @@ export function EventDetailPage() {
   const { data: events, isLoading: eventsLoading } = useEvents()
   const event = events?.find((e) => e.id === eventId)
 
-  const { data: tasks, isLoading: tasksLoading } = useTasksForEvent(eventId)
-  const { data: timeline, isLoading: timelineLoading } = useEventTimeline(eventId)
-  const { data: decisions, isLoading: decisionsLoading } = useDecisionsForEvent(eventId)
-  const { data: challenges, isLoading: challengesLoading } = useChallengesForEvent(eventId)
-  const { data: outfits, isLoading: outfitsLoading } = useOutfitsForEvent(eventId)
-  const { data: things, isLoading: thingsLoading } = useThingsForEvent(eventId)
-  const { data: allVendors, isLoading: vendorsLoading } = useVendors()
+  const { data: tasks, isLoading: tasksLoading, isError: tasksError } = useTasksForEvent(eventId)
+  const { data: timeline, isLoading: timelineLoading, isError: timelineError } = useEventTimeline(eventId)
+  const { data: decisions, isLoading: decisionsLoading, isError: decisionsError } = useDecisionsForEvent(eventId)
+  const { data: challenges, isLoading: challengesLoading, isError: challengesError } = useChallengesForEvent(eventId)
+  const { data: outfits, isLoading: outfitsLoading, isError: outfitsError } = useOutfitsForEvent(eventId)
+  const { data: things, isLoading: thingsLoading, isError: thingsError } = useThingsForEvent(eventId)
+  const { data: allVendors, isLoading: vendorsLoading, isError: vendorsError } = useVendors()
   const { data: menu } = useMenuForEvent(canManage ? eventId : undefined)
+
+  const hasLoadError =
+    tasksError || timelineError || decisionsError || challengesError || outfitsError || thingsError || vendorsError
 
   const [addTaskOpen, setAddTaskOpen] = useState(false)
   const [addTimelineOpen, setAddTimelineOpen] = useState(false)
@@ -100,6 +104,12 @@ export function EventDetailPage() {
         </ActionIcon>
         <Title order={3}>{event.name}</Title>
       </Group>
+
+      {hasLoadError && (
+        <Alert icon={<IconAlertTriangle size={16} />} color="red" variant="light">
+          Some information on this page couldn't load. Check your connection and try again.
+        </Alert>
+      )}
 
       <Card withBorder radius="md" p="lg">
         <Text size="sm" c="dimmed">

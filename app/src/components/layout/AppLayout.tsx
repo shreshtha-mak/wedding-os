@@ -2,6 +2,8 @@ import { UnstyledButton, Text } from '@mantine/core'
 import { IconCalendarEvent, IconClipboardList, IconDots, IconHome, IconUsers } from '@tabler/icons-react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../../features/auth/AuthContext'
+import { useOnlineStatus } from '../../lib/useOnlineStatus'
+import { ErrorBoundary } from '../ErrorBoundary'
 
 const BASE_TABS = [
   { to: '/', label: 'Home', icon: IconHome },
@@ -13,6 +15,7 @@ const BASE_TABS = [
 export function AppLayout() {
   const location = useLocation()
   const { person } = useAuth()
+  const online = useOnlineStatus()
   // More (Vendors/Budget/Menus) is entirely organiser/admin-only at the RLS
   // level, so a restricted user would land on three empty tabs — hide the
   // whole entry point rather than show a section with nothing in it.
@@ -21,8 +24,22 @@ export function AppLayout() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100svh' }}>
+      {!online && (
+        <div
+          style={{
+            padding: '6px 12px',
+            textAlign: 'center',
+            background: 'var(--mantine-color-yellow-light)',
+            fontSize: 13,
+          }}
+        >
+          You're offline — changes won't save until you're back online.
+        </div>
+      )}
       <div style={{ flex: 1, overflowY: 'auto' }}>
-        <Outlet />
+        <ErrorBoundary key={location.pathname}>
+          <Outlet />
+        </ErrorBoundary>
       </div>
 
       <nav

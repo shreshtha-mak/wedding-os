@@ -9,7 +9,7 @@ export function ReadinessPage() {
   const navigate = useNavigate()
   const { person } = useAuth()
   const canView = person?.role_id === 'admin' || person?.role_id === 'organiser'
-  const { data, isLoading } = useWeddingReadinessData(canView)
+  const { data, isLoading, isError } = useWeddingReadinessData(canView)
 
   if (!canView) {
     return (
@@ -36,7 +36,13 @@ export function ReadinessPage() {
         </Center>
       )}
 
-      {readiness && (
+      {isError && (
+        <Text c="red" ta="center" py="xl">
+          Couldn't load readiness data. Check your connection and try again.
+        </Text>
+      )}
+
+      {readiness && !isError && (
         <>
           <Card withBorder radius="md" p="lg">
             <Group justify="space-between">

@@ -53,7 +53,7 @@ export function MenuDetailModal({
   onClose: () => void
 }) {
   const { person } = useAuth()
-  const { data: menu, isLoading } = useMenuForEvent(opened ? eventId : undefined)
+  const { data: menu, isLoading, isError } = useMenuForEvent(opened ? eventId : undefined)
   const createMenu = useCreateMenu()
   const updateStatus = useUpdateMenuStatus()
   const addItem = useAddMenuItem()
@@ -64,11 +64,15 @@ export function MenuDetailModal({
   const [isVegetarian, setIsVegetarian] = useState(false)
 
   useEffect(() => {
-    if (opened && !isLoading && !menu && person) {
+    // isError guards against retrying forever on a failed fetch, and
+    // isPending against firing again before the first create resolves —
+    // without both, a failed/slow fetch left `menu` at undefined and this
+    // re-fired on every render.
+    if (opened && !isLoading && !isError && !menu && person && !createMenu.isPending) {
       createMenu.mutate({ wedding_id: person.wedding_id, event_id: eventId })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [opened, isLoading, menu, person])
+  }, [opened, isLoading, isError, menu, person])
 
   async function handleAddItem() {
     if (!itemName.trim() || !menu) return
@@ -85,7 +89,12 @@ export function MenuDetailModal({
   return (
     <Modal opened={opened} onClose={onClose} title={`${eventName} menu`} centered size="lg">
       <Stack gap="sm">
-        {(isLoading || !menu) && (
+        {isError && (
+          <Text c="red" size="sm" ta="center" py="md">
+            Couldn't load this menu. Check your connection and try again.
+          </Text>
+        )}
+        {!isError && (isLoading || !menu) && (
           <Center py="md">
             <Loader size="sm" />
           </Center>

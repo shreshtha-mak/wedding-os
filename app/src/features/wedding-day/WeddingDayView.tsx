@@ -1,4 +1,5 @@
 import { Badge, Card, Center, Checkbox, Group, Loader, Stack, Text, Title } from '@mantine/core'
+import { IconAlertTriangle } from '@tabler/icons-react'
 import dayjs from 'dayjs'
 import { useAuth } from '../auth/AuthContext'
 import { useTasksForEvent } from '../tasks/api'
@@ -15,10 +16,22 @@ function formatTime(time: string | null) {
   return dayjs(`2000-01-01T${time}`).format('h:mm A')
 }
 
+function ErrorText() {
+  return (
+    <Group gap={6} c="red">
+      <IconAlertTriangle size={14} />
+      <Text size="sm">Couldn't load this — check your connection.</Text>
+    </Group>
+  )
+}
+
 function EventStatus({ eventId }: { eventId: string }) {
-  const { data: menu } = useMenuForEvent(eventId)
-  const { data: allVendors } = useVendors()
-  const { data: things } = useThingsForEvent(eventId)
+  const { data: menu, isLoading: menuLoading, isError: menuError } = useMenuForEvent(eventId)
+  const { data: allVendors, isLoading: vendorsLoading, isError: vendorsError } = useVendors()
+  const { data: things, isLoading: thingsLoading, isError: thingsError } = useThingsForEvent(eventId)
+
+  const isLoading = menuLoading || vendorsLoading || thingsLoading
+  const isError = menuError || vendorsError || thingsError
 
   const assignments = allVendors?.flatMap((v) =>
     v.assignments.filter((a) => a.event_id === eventId).map((a) => ({ ...a, vendorName: v.name })),
@@ -30,41 +43,49 @@ function EventStatus({ eventId }: { eventId: string }) {
       <Title order={4} mb="sm">
         Event Status
       </Title>
-      <Stack gap={6}>
-        <Group justify="space-between">
-          <Text size="sm">Menu</Text>
-          <Badge size="xs" color={menu?.status === 'Finalised' ? 'green' : 'gray'} variant="light">
-            {menu?.status ?? 'Not started'}
-          </Badge>
-        </Group>
-        {assignments?.map((a) => (
-          <Group key={a.id} justify="space-between">
-            <Text size="sm">{a.vendorName}</Text>
-            <Badge size="xs" color={a.status === 'Completed' || a.status === 'Confirmed' ? 'green' : 'gray'} variant="light">
-              {a.status}
+      {isLoading && (
+        <Center py="md">
+          <Loader size="sm" />
+        </Center>
+      )}
+      {isError && <ErrorText />}
+      {!isLoading && !isError && (
+        <Stack gap={6}>
+          <Group justify="space-between">
+            <Text size="sm">Menu</Text>
+            <Badge size="xs" color={menu?.status === 'Finalised' ? 'green' : 'gray'} variant="light">
+              {menu?.status ?? 'Not started'}
             </Badge>
           </Group>
-        ))}
-        {notReadyThings && notReadyThings.length > 0 && (
-          <>
-            <Text size="xs" c="dimmed" mt={4}>
-              Not ready:
-            </Text>
-            {notReadyThings.map((t) => (
-              <Text key={t.id} size="sm" c="orange">
-                {t.item_name} — {t.status}
+          {assignments?.map((a) => (
+            <Group key={a.id} justify="space-between">
+              <Text size="sm">{a.vendorName}</Text>
+              <Badge size="xs" color={a.status === 'Completed' || a.status === 'Confirmed' ? 'green' : 'gray'} variant="light">
+                {a.status}
+              </Badge>
+            </Group>
+          ))}
+          {notReadyThings && notReadyThings.length > 0 && (
+            <>
+              <Text size="xs" c="dimmed" mt={4}>
+                Not ready:
               </Text>
-            ))}
-          </>
-        )}
-      </Stack>
+              {notReadyThings.map((t) => (
+                <Text key={t.id} size="sm" c="orange">
+                  {t.item_name} — {t.status}
+                </Text>
+              ))}
+            </>
+          )}
+        </Stack>
+      )}
     </Card>
   )
 }
 
 function YourTasks({ eventId }: { eventId: string }) {
   const { person } = useAuth()
-  const { data: tasks, isLoading } = useTasksForEvent(eventId)
+  const { data: tasks, isLoading, isError } = useTasksForEvent(eventId)
   const mine = tasks?.filter((t) => t.assigned_person_id === person?.id && t.status !== 'Completed')
 
   return (
@@ -77,7 +98,8 @@ function YourTasks({ eventId }: { eventId: string }) {
           <Loader size="sm" />
         </Center>
       )}
-      {!isLoading && mine?.length === 0 && (
+      {isError && <ErrorText />}
+      {!isLoading && !isError && mine?.length === 0 && (
         <Text c="dimmed" size="sm">
           Nothing on your plate for this event.
         </Text>
@@ -88,10 +110,10 @@ function YourTasks({ eventId }: { eventId: string }) {
 }
 
 function GuestArrivals({ eventId }: { eventId: string }) {
-  const { data: attendance, isLoading } = useAttendanceForEvent(eventId)
+  const { data: attendance, isLoading, isError } = useAttendanceForEvent(eventId)
   const markArrived = useMarkArrived()
 
-  if (isLoading || !attendance || attendance.length === 0) return null
+  if (isLoading || isError || !attendance || attendance.length === 0) return null
 
   const arrivedCount = attendance.filter((a) => a.arrived).length
 
@@ -118,7 +140,7 @@ function GuestArrivals({ eventId }: { eventId: string }) {
 }
 
 function WhatsNext({ eventId }: { eventId: string }) {
-  const { data: timeline, isLoading } = useEventTimeline(eventId)
+  const { data: timeline, isLoading, isError } = useEventTimeline(eventId)
   const now = dayjs().format('HH:mm:ss')
   const upcoming = timeline?.filter((t) => !t.start_time || t.start_time >= now).slice(0, 4)
 
@@ -132,7 +154,8 @@ function WhatsNext({ eventId }: { eventId: string }) {
           <Loader size="sm" />
         </Center>
       )}
-      {!isLoading && upcoming?.length === 0 && (
+      {isError && <ErrorText />}
+      {!isLoading && !isError && upcoming?.length === 0 && (
         <Text c="dimmed" size="sm">
           Nothing left on the timeline.
         </Text>

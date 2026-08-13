@@ -31,7 +31,7 @@ function EventMenuRow({ event }: { event: EventRow }) {
 }
 
 export function MenusPanel() {
-  const { data: events, isLoading } = useEvents()
+  const { data: events, isLoading, isError } = useEvents()
 
   return (
     <Stack p="md" pb={96} gap="md">
@@ -41,6 +41,12 @@ export function MenusPanel() {
         <Center py="xl">
           <Loader />
         </Center>
+      )}
+
+      {isError && (
+        <Text c="red" ta="center" py="xl">
+          Couldn't load events. Check your connection and try again.
+        </Text>
       )}
 
       {events?.map((e) => <EventMenuRow key={e.id} event={e} />)}

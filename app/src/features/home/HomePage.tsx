@@ -1,5 +1,5 @@
 import { Badge, Card, Center, Group, Loader, Stack, Text, Title, UnstyledButton } from '@mantine/core'
-import { IconAlertTriangle, IconSearch } from '@tabler/icons-react'
+import { IconAlertTriangle, IconLogout, IconSearch } from '@tabler/icons-react'
 import dayjs from 'dayjs'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
@@ -42,7 +42,7 @@ function Countdown({ startDate, name }: { startDate: string | null; name: string
 
 function ReadinessCard() {
   const navigate = useNavigate()
-  const { data, isLoading } = useWeddingReadinessData(true)
+  const { data, isLoading, isError } = useWeddingReadinessData(true)
   const readiness = data ? computeWeddingReadiness(data) : null
 
   return (
@@ -53,7 +53,11 @@ function ReadinessCard() {
             <Text size="sm" c="dimmed">
               Wedding Readiness
             </Text>
-            {isLoading || !readiness ? (
+            {isError ? (
+              <Text size="sm" c="red">
+                Couldn't load
+              </Text>
+            ) : isLoading || !readiness ? (
               <Loader size="sm" mt={4} />
             ) : (
               <Title order={2}>{readiness.overallPercent ?? '—'}%</Title>
@@ -71,10 +75,10 @@ function ReadinessCard() {
 }
 
 function NeedsAttentionCard() {
-  const { data, isLoading } = useNeedsAttentionData(true)
+  const { data, isLoading, isError } = useNeedsAttentionData(true)
   const items = data ? computeNeedsAttention(data).slice(0, 5) : []
 
-  if (!isLoading && items.length === 0) return null
+  if (!isLoading && !isError && items.length === 0) return null
 
   return (
     <Card withBorder radius="md" p="lg">
@@ -85,6 +89,11 @@ function NeedsAttentionCard() {
         <Center py="md">
           <Loader size="sm" />
         </Center>
+      )}
+      {isError && (
+        <Text size="sm" c="red">
+          Couldn't load — check your connection.
+        </Text>
       )}
       <Stack gap="xs">
         {items.map((item) => (
@@ -153,13 +162,14 @@ function UpcomingEvents() {
 // list).
 function MyThings() {
   const { person } = useAuth()
-  const { data: tasks, isLoading: tasksLoading } = useTasks('mine', person?.id)
-  const { data: things, isLoading: thingsLoading } = useThings('mine', person?.id)
-  const { data: outfits, isLoading: outfitsLoading } = useOutfits()
-  const { data: decisions, isLoading: decisionsLoading } = useDecisions('mine', person?.id)
-  const { data: challenges, isLoading: challengesLoading } = useChallenges('mine', person?.id)
+  const { data: tasks, isLoading: tasksLoading, isError: tasksError } = useTasks('mine', person?.id)
+  const { data: things, isLoading: thingsLoading, isError: thingsError } = useThings('mine', person?.id)
+  const { data: outfits, isLoading: outfitsLoading, isError: outfitsError } = useOutfits()
+  const { data: decisions, isLoading: decisionsLoading, isError: decisionsError } = useDecisions('mine', person?.id)
+  const { data: challenges, isLoading: challengesLoading, isError: challengesError } = useChallenges('mine', person?.id)
 
   const isLoading = tasksLoading || thingsLoading || outfitsLoading || decisionsLoading || challengesLoading
+  const isError = tasksError || thingsError || outfitsError || decisionsError || challengesError
 
   const pendingTasks = (tasks ?? []).filter((t) => t.status !== 'Completed')
   const pendingThings = (things ?? []).filter((t) => t.status !== 'Packed' && t.status !== 'At Venue' && t.status !== 'Returned')
@@ -181,7 +191,12 @@ function MyThings() {
           <Loader size="sm" />
         </Center>
       )}
-      {!isLoading && total === 0 && (
+      {isError && (
+        <Text size="sm" c="red">
+          Couldn't load everything — check your connection.
+        </Text>
+      )}
+      {!isLoading && !isError && total === 0 && (
         <Text c="dimmed" size="sm">
           Nothing pending — you're all caught up.
         </Text>
@@ -407,7 +422,7 @@ function RecentActivity() {
 
 export function HomePage() {
   const navigate = useNavigate()
-  const { person } = useAuth()
+  const { person, signOut } = useAuth()
   const { data: wedding } = useWedding()
   const { data: events } = useEvents()
   const canSeeReadiness = person?.role_id === 'admin' || person?.role_id === 'organiser'
@@ -421,9 +436,14 @@ export function HomePage() {
     <Stack p="md" pb={96} gap="md">
       <Group justify="space-between">
         <Title order={2}>Hi {person?.name?.split(' ')[0] ?? ''}</Title>
-        <UnstyledButton onClick={() => navigate('/search')} aria-label="Search">
-          <IconSearch size={22} />
-        </UnstyledButton>
+        <Group gap="md">
+          <UnstyledButton onClick={() => navigate('/search')} aria-label="Search">
+            <IconSearch size={22} />
+          </UnstyledButton>
+          <UnstyledButton onClick={() => signOut()} aria-label="Sign out">
+            <IconLogout size={22} />
+          </UnstyledButton>
+        </Group>
       </Group>
 
       {currentEventState ? (
