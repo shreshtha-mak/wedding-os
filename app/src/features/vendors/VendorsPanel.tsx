@@ -1,7 +1,5 @@
 import { useState } from 'react'
 import {
-  ActionIcon,
-  Affix,
   Badge,
   Card,
   Center,
@@ -14,8 +12,8 @@ import {
   Title,
   UnstyledButton,
 } from '@mantine/core'
-import { IconPlus } from '@tabler/icons-react'
 import { useVendors, useUpdateChecklistStatus } from './api'
+import { QuickAddButton } from '../../components/layout/QuickAddButton'
 import type { AssignmentWithChecklist, VendorWithAssignments } from './api'
 import { AddVendorModal } from './AddVendorModal'
 import { AddAssignmentModal } from './AddAssignmentModal'
@@ -164,11 +162,7 @@ export function VendorsPanel() {
 
       {vendors?.map((v) => <VendorCard key={v.id} vendor={v} />)}
 
-      <Affix position={{ bottom: 24, right: 24 }}>
-        <ActionIcon size={56} radius="xl" onClick={() => setAddOpen(true)} aria-label="Add vendor">
-          <IconPlus size={26} />
-        </ActionIcon>
-      </Affix>
+      <QuickAddButton onClick={() => setAddOpen(true)} label="Add vendor" />
 
       <AddVendorModal opened={addOpen} onClose={() => setAddOpen(false)} />
     </Stack>

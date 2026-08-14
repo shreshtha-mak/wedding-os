@@ -1,15 +1,31 @@
-import { ActionIcon, Alert, Badge, Card, Center, Group, Loader, Progress, Stack, Text, Title } from '@mantine/core'
+import {
+  ActionIcon,
+  Alert,
+  Badge,
+  Card,
+  Center,
+  Group,
+  Loader,
+  Progress,
+  Stack,
+  Text,
+  Title,
+  UnstyledButton,
+} from '@mantine/core'
 import { IconAlertTriangle, IconArrowLeft } from '@tabler/icons-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import { useWeddingReadinessData } from './api'
+import { useNeedsAttentionData, useWeddingReadinessData } from './api'
 import { computeWeddingReadiness, readinessLevelColor, readinessLevelLabel } from './calculate'
+import { computeNeedsAttention } from './needsAttention'
 
 export function ReadinessPage() {
   const navigate = useNavigate()
   const { person } = useAuth()
   const canView = person?.role_id === 'admin' || person?.role_id === 'organiser'
   const { data, isLoading, isError } = useWeddingReadinessData(canView)
+  const { data: attentionData } = useNeedsAttentionData(canView)
+  const attentionItems = attentionData ? computeNeedsAttention(attentionData) : []
 
   if (!canView) {
     return (
@@ -63,6 +79,34 @@ export function ReadinessPage() {
                 ))}
               </Stack>
             </Alert>
+          )}
+
+          {attentionItems.length > 0 && (
+            <Card withBorder radius="md" p="lg">
+              <Title order={4} mb="sm">
+                Needs Attention
+              </Title>
+              <Stack gap="xs">
+                {attentionItems.map((item) => (
+                  <UnstyledButton key={item.id} onClick={() => navigate(item.linkTo)} style={{ width: '100%' }}>
+                    <Group gap={6} wrap="nowrap">
+                      <IconAlertTriangle
+                        size={14}
+                        color={
+                          item.severity === 'critical' ? 'var(--mantine-color-red-6)' : 'var(--mantine-color-yellow-6)'
+                        }
+                      />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <Text size="sm">{item.label}</Text>
+                        <Text size="xs" c="dimmed">
+                          {item.sublabel}
+                        </Text>
+                      </div>
+                    </Group>
+                  </UnstyledButton>
+                ))}
+              </Stack>
+            </Card>
           )}
 
           <Stack gap="sm">

@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import {
   ActionIcon,
-  Affix,
   Badge,
   Card,
   Center,
@@ -12,15 +11,16 @@ import {
   Title,
   UnstyledButton,
 } from '@mantine/core'
-import { IconPlus, IconX } from '@tabler/icons-react'
+import { IconChevronDown, IconChevronRight, IconX } from '@tabler/icons-react'
 import dayjs from 'dayjs'
+import { QuickAddButton } from '../../components/layout/QuickAddButton'
 import { useAccommodationLocations, useRemoveAssignment } from './api'
 import { useGuests } from '../guests/api'
 import { AddLocationModal } from './AddLocationModal'
 import { AddRoomModal } from './AddRoomModal'
 import { AddBookingModal } from './AddBookingModal'
 import { AssignGuestModal } from './AssignGuestModal'
-import type { BookingWithVendor, RoomWithAssignments } from './api'
+import type { BookingWithVendor, LocationWithRooms, RoomWithAssignments } from './api'
 
 function bookingStatusColor(status: string): string {
   switch (status) {
@@ -111,6 +111,84 @@ function RoomRow({ room }: { room: RoomWithAssignments }) {
   )
 }
 
+// Bookings + rooms + per-room guest assignments used to always render in
+// full under every location, which got long fast with several locations —
+// collapsed to a summary by default, expand on tap (same pattern as
+// Outfits/Decor). The "+Booking"/"+Room" actions stay outside the toggle
+// so they're usable without expanding first.
+function LocationCard({
+  location,
+  onAddBooking,
+  onAddRoom,
+}: {
+  location: LocationWithRooms
+  onAddBooking: () => void
+  onAddRoom: () => void
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const occupied = location.rooms.reduce((sum, r) => sum + r.assignments.length, 0)
+  const capacity = location.rooms.reduce((sum, r) => sum + r.capacity, 0)
+
+  return (
+    <Card withBorder radius="md" p="md">
+      <Group justify="space-between" wrap="nowrap">
+        <UnstyledButton onClick={() => setExpanded((v) => !v)} style={{ flex: 1, minWidth: 0 }}>
+          <Group gap={6} wrap="nowrap">
+            {expanded ? <IconChevronDown size={16} /> : <IconChevronRight size={16} />}
+            <div>
+              <Text fw={600}>{location.name}</Text>
+              {location.address && (
+                <Text size="xs" c="dimmed">
+                  {location.address}
+                </Text>
+              )}
+              <Text size="xs" c="dimmed">
+                {location.rooms.length} room{location.rooms.length === 1 ? '' : 's'} · {occupied}/{capacity} beds
+                {location.bookings.length > 0 && ` · ${location.bookings.length} booking${location.bookings.length === 1 ? '' : 's'}`}
+              </Text>
+            </div>
+          </Group>
+        </UnstyledButton>
+        <Group gap="sm" wrap="nowrap">
+          <UnstyledButton onClick={onAddBooking}>
+            <Text size="xs" c="accent">
+              + Booking
+            </Text>
+          </UnstyledButton>
+          <UnstyledButton onClick={onAddRoom}>
+            <Text size="xs" c="accent">
+              + Room
+            </Text>
+          </UnstyledButton>
+        </Group>
+      </Group>
+
+      {expanded && (
+        <>
+          {location.bookings.length > 0 && (
+            <Stack gap={0} mt="sm">
+              {location.bookings.map((booking) => (
+                <BookingRow key={booking.id} booking={booking} />
+              ))}
+            </Stack>
+          )}
+
+          <Stack gap={0} mt="sm">
+            {location.rooms.map((room) => (
+              <RoomRow key={room.id} room={room} />
+            ))}
+            {location.rooms.length === 0 && (
+              <Text size="xs" c="dimmed">
+                No rooms yet.
+              </Text>
+            )}
+          </Stack>
+        </>
+      )}
+    </Card>
+  )
+}
+
 export function AccommodationPanel() {
   const { data: locations, isLoading, isError } = useAccommodationLocations()
   const { data: guests } = useGuests()
@@ -161,56 +239,15 @@ export function AccommodationPanel() {
       )}
 
       {locations?.map((location) => (
-        <Card key={location.id} withBorder radius="md" p="md">
-          <Group justify="space-between">
-            <div>
-              <Text fw={600}>{location.name}</Text>
-              {location.address && (
-                <Text size="xs" c="dimmed">
-                  {location.address}
-                </Text>
-              )}
-            </div>
-            <Group gap="sm">
-              <UnstyledButton onClick={() => setAddBookingFor(location.id)}>
-                <Text size="xs" c="accent">
-                  + Booking
-                </Text>
-              </UnstyledButton>
-              <UnstyledButton onClick={() => setAddRoomFor(location.id)}>
-                <Text size="xs" c="accent">
-                  + Room
-                </Text>
-              </UnstyledButton>
-            </Group>
-          </Group>
-
-          {location.bookings.length > 0 && (
-            <Stack gap={0} mt="sm">
-              {location.bookings.map((booking) => (
-                <BookingRow key={booking.id} booking={booking} />
-              ))}
-            </Stack>
-          )}
-
-          <Stack gap={0} mt="sm">
-            {location.rooms.map((room) => (
-              <RoomRow key={room.id} room={room} />
-            ))}
-            {location.rooms.length === 0 && (
-              <Text size="xs" c="dimmed">
-                No rooms yet.
-              </Text>
-            )}
-          </Stack>
-        </Card>
+        <LocationCard
+          key={location.id}
+          location={location}
+          onAddBooking={() => setAddBookingFor(location.id)}
+          onAddRoom={() => setAddRoomFor(location.id)}
+        />
       ))}
 
-      <Affix position={{ bottom: 24, right: 24 }}>
-        <ActionIcon size={56} radius="xl" onClick={() => setAddLocationOpen(true)} aria-label="Add location">
-          <IconPlus size={26} />
-        </ActionIcon>
-      </Affix>
+      <QuickAddButton onClick={() => setAddLocationOpen(true)} label="Add location" />
 
       <AddLocationModal opened={addLocationOpen} onClose={() => setAddLocationOpen(false)} />
       {addRoomFor && (

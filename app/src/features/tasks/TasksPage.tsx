@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { ActionIcon, Affix, Center, Loader, SegmentedControl, Stack, Text, Title } from '@mantine/core'
-import { IconPlus } from '@tabler/icons-react'
+import { Center, Loader, SegmentedControl, Stack, Text, Title } from '@mantine/core'
+import { QuickAddButton } from '../../components/layout/QuickAddButton'
 import { useAuth } from '../auth/AuthContext'
 import { useTasks } from './api'
 import { TaskItem } from './TaskItem'
@@ -52,11 +52,7 @@ export function TasksPage() {
       {tasks?.map((task) => <TaskItem key={task.id} task={task} />)}
 
       {canSeeAll && (
-        <Affix position={{ bottom: 24, right: 24 }}>
-          <ActionIcon size={56} radius="xl" onClick={() => setAddOpen(true)} aria-label="Add task">
-            <IconPlus size={26} />
-          </ActionIcon>
-        </Affix>
+        <QuickAddButton onClick={() => setAddOpen(true)} label="Add task" />
       )}
 
       {canSeeAll && <AddTaskModal opened={addOpen} onClose={() => setAddOpen(false)} />}

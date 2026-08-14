@@ -8,7 +8,7 @@ import { dueIndicator, dueIndicatorColor, priorityColor } from '../tasks/taskSta
 import { useRecentActivity } from '../activity/api'
 import { useDecisions } from '../decisions/api'
 import { useChallenges } from '../challenges/api'
-import { useCalendarItems } from '../calendar/api'
+import { MonthGrid } from '../calendar/MonthGrid'
 import { useWeddingReadinessData, useNeedsAttentionData } from '../readiness/api'
 import { computeWeddingReadiness, readinessLevelColor, readinessLevelLabel } from '../readiness/calculate'
 import { computeNeedsAttention } from '../readiness/needsAttention'
@@ -79,43 +79,46 @@ function ReadinessCard() {
 }
 
 function NeedsAttentionCard() {
+  const navigate = useNavigate()
   const { data, isLoading, isError } = useNeedsAttentionData(true)
   const items = data ? computeNeedsAttention(data).slice(0, 5) : []
 
   if (!isLoading && !isError && items.length === 0) return null
 
   return (
-    <Card withBorder radius="md" p="lg">
-      <Title order={4} mb="sm">
-        Needs Attention
-      </Title>
-      {isLoading && (
-        <Center py="md">
-          <Loader size="sm" />
-        </Center>
-      )}
-      {isError && (
-        <Text size="sm" c="red">
-          Couldn't load — check your connection.
-        </Text>
-      )}
-      <Stack gap="xs">
-        {items.map((item) => (
-          <Group key={item.id} gap={6} wrap="nowrap">
-            <IconAlertTriangle
-              size={14}
-              color={item.severity === 'critical' ? 'var(--mantine-color-red-6)' : 'var(--mantine-color-yellow-6)'}
-            />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <Text size="sm">{item.label}</Text>
-              <Text size="xs" c="dimmed">
-                {item.sublabel}
-              </Text>
-            </div>
-          </Group>
-        ))}
-      </Stack>
-    </Card>
+    <UnstyledButton onClick={() => navigate('/readiness')} style={{ width: '100%' }}>
+      <Card withBorder radius="md" p="lg">
+        <Title order={4} mb="sm">
+          Needs Attention
+        </Title>
+        {isLoading && (
+          <Center py="md">
+            <Loader size="sm" />
+          </Center>
+        )}
+        {isError && (
+          <Text size="sm" c="red">
+            Couldn't load — check your connection.
+          </Text>
+        )}
+        <Stack gap="xs">
+          {items.map((item) => (
+            <Group key={item.id} gap={6} wrap="nowrap">
+              <IconAlertTriangle
+                size={14}
+                color={item.severity === 'critical' ? 'var(--mantine-color-red-6)' : 'var(--mantine-color-yellow-6)'}
+              />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <Text size="sm">{item.label}</Text>
+                <Text size="xs" c="dimmed">
+                  {item.sublabel}
+                </Text>
+              </div>
+            </Group>
+          ))}
+        </Stack>
+      </Card>
+    </UnstyledButton>
   )
 }
 
@@ -126,9 +129,11 @@ function UpcomingEvents() {
 
   return (
     <Card withBorder radius="md" p="lg">
-      <Title order={4} mb="sm">
-        Upcoming Events
-      </Title>
+      <UnstyledButton onClick={() => navigate('/events')} style={{ width: '100%' }}>
+        <Title order={4} mb="sm">
+          Upcoming Events
+        </Title>
+      </UnstyledButton>
       {isLoading && (
         <Center py="md">
           <Loader size="sm" />
@@ -165,6 +170,7 @@ function UpcomingEvents() {
 // specifically needs my attention?" — distinct from any module's own full
 // list).
 function MyThings() {
+  const navigate = useNavigate()
   const { person } = useAuth()
   const { data: tasks, isLoading: tasksLoading, isError: tasksError } = useTasks('mine', person?.id)
   const { data: decisions, isLoading: decisionsLoading, isError: decisionsError } = useDecisions('mine', person?.id)
@@ -184,27 +190,28 @@ function MyThings() {
   const total = pendingTasks.length + pendingDecisions.length + openChallenges.length
 
   return (
-    <Card withBorder radius="md" p="lg">
-      <Title order={4} mb="sm">
-        My Things
-      </Title>
-      {isLoading && (
-        <Center py="md">
-          <Loader size="sm" />
-        </Center>
-      )}
-      {isError && (
-        <Text size="sm" c="red">
-          Couldn't load everything — check your connection.
-        </Text>
-      )}
-      {!isLoading && !isError && total === 0 && (
-        <Text c="dimmed" size="sm">
-          Nothing pending — you're all caught up.
-        </Text>
-      )}
-      <Stack gap="xs">
-        {pendingTasks.slice(0, 4).map((t) => {
+    <UnstyledButton onClick={() => navigate('/planning')} style={{ width: '100%' }}>
+      <Card withBorder radius="md" p="lg">
+        <Title order={4} mb="sm">
+          My Things
+        </Title>
+        {isLoading && (
+          <Center py="md">
+            <Loader size="sm" />
+          </Center>
+        )}
+        {isError && (
+          <Text size="sm" c="red">
+            Couldn't load everything — check your connection.
+          </Text>
+        )}
+        {!isLoading && !isError && total === 0 && (
+          <Text c="dimmed" size="sm">
+            Nothing pending — you're all caught up.
+          </Text>
+        )}
+        <Stack gap="xs">
+          {pendingTasks.slice(0, 4).map((t) => {
           const indicator = dueIndicator(t)
           return (
             <Group key={t.id} justify="space-between" wrap="nowrap">
@@ -239,131 +246,93 @@ function MyThings() {
             </Badge>
           </Group>
         ))}
-      </Stack>
-    </Card>
-  )
-}
-
-function CompactCalendar() {
-  const navigate = useNavigate()
-  const { data: items, isLoading } = useCalendarItems()
-  // Home's calendar is deliberately minimal — events + deadlines + decisions,
-  // never every ordinary task (spec: "do not clutter the Home calendar").
-  const majorItems = items
-    ?.filter((i) => i.type !== 'task' && !dayjs(i.date).isBefore(dayjs(), 'day'))
-    .slice(0, 4)
-
-  return (
-    <Card withBorder radius="md" p="lg">
-      <Group justify="space-between" mb="sm">
-        <Title order={4}>Calendar</Title>
-        <UnstyledButton onClick={() => navigate('/planning')}>
-          <Text size="xs" c="dimmed">
-            See all
-          </Text>
-        </UnstyledButton>
-      </Group>
-      {isLoading && (
-        <Center py="md">
-          <Loader size="sm" />
-        </Center>
-      )}
-      {!isLoading && majorItems?.length === 0 && (
-        <Text c="dimmed" size="sm">
-          Nothing major coming up.
-        </Text>
-      )}
-      <Stack gap="xs">
-        {majorItems?.map((item) => (
-          <Group key={`${item.type}-${item.id}`} justify="space-between" wrap="nowrap">
-            <Text size="sm" style={{ flex: 1 }}>
-              {item.label}
-            </Text>
-            <Text size="xs" c="dimmed">
-              {dayjs(item.date).format('DD MMM')}
-            </Text>
-          </Group>
-        ))}
-      </Stack>
-    </Card>
+        </Stack>
+      </Card>
+    </UnstyledButton>
   )
 }
 
 function DecisionsCard() {
+  const navigate = useNavigate()
   const { person } = useAuth()
   const canSeeAll = person?.role_id === 'admin' || person?.role_id === 'organiser'
   const { data: decisions, isLoading } = useDecisions(canSeeAll ? 'all' : 'mine', person?.id)
   const pending = decisions?.filter((d) => d.status === 'Pending').slice(0, 4)
 
   return (
-    <Card withBorder radius="md" p="lg">
-      <Title order={4} mb="sm">
-        Decisions
-      </Title>
-      {isLoading && (
-        <Center py="md">
-          <Loader size="sm" />
-        </Center>
-      )}
-      {!isLoading && pending?.length === 0 && (
-        <Text c="dimmed" size="sm">
-          No pending decisions.
-        </Text>
-      )}
-      <Stack gap="xs">
-        {pending?.map((d) => (
-          <Group key={d.id} justify="space-between" wrap="nowrap">
-            <Text size="sm" style={{ flex: 1 }}>
-              {d.question}
-            </Text>
-            {d.deadline && (
-              <Text size="xs" c="dimmed">
-                {dayjs(d.deadline).format('DD MMM')}
+    <UnstyledButton onClick={() => navigate('/planning?tab=decisions')} style={{ width: '100%' }}>
+      <Card withBorder radius="md" p="lg">
+        <Title order={4} mb="sm">
+          Decisions
+        </Title>
+        {isLoading && (
+          <Center py="md">
+            <Loader size="sm" />
+          </Center>
+        )}
+        {!isLoading && pending?.length === 0 && (
+          <Text c="dimmed" size="sm">
+            No pending decisions.
+          </Text>
+        )}
+        <Stack gap="xs">
+          {pending?.map((d) => (
+            <Group key={d.id} justify="space-between" wrap="nowrap">
+              <Text size="sm" style={{ flex: 1 }}>
+                {d.question}
               </Text>
-            )}
-          </Group>
-        ))}
-      </Stack>
-    </Card>
+              {d.deadline && (
+                <Text size="xs" c="dimmed">
+                  {dayjs(d.deadline).format('DD MMM')}
+                </Text>
+              )}
+            </Group>
+          ))}
+        </Stack>
+      </Card>
+    </UnstyledButton>
   )
 }
 
 function ChallengesCard() {
+  const navigate = useNavigate()
   const { person } = useAuth()
   const canSeeAll = person?.role_id === 'admin' || person?.role_id === 'organiser'
   const { data: challenges, isLoading } = useChallenges(canSeeAll ? 'all' : 'mine', person?.id)
   const open = challenges?.filter((c) => c.status !== 'Resolved').slice(0, 4)
 
   return (
-    <Card withBorder radius="md" p="lg">
-      <Title order={4} mb="sm">
-        Challenges
-      </Title>
-      {isLoading && (
-        <Center py="md">
-          <Loader size="sm" />
-        </Center>
-      )}
-      {!isLoading && open?.length === 0 && (
-        <Text c="dimmed" size="sm">
-          No open challenges 🎉
-        </Text>
-      )}
-      <Stack gap="xs">
-        {open?.map((c) => (
-          <Group key={c.id} justify="space-between" wrap="nowrap">
-            <Text size="sm" style={{ flex: 1 }}>
-              {c.title}
-            </Text>
-            {c.priority !== 'Medium' && (
-              <Badge size="xs" color={priorityColor(c.priority)} variant="light">
-                {c.priority}
-              </Badge>
-            )}
-          </Group>
-        ))}
-      </Stack>
-    </Card>
+    <UnstyledButton onClick={() => navigate('/planning?tab=challenges')} style={{ width: '100%' }}>
+      <Card withBorder radius="md" p="lg">
+        <Title order={4} mb="sm">
+          Challenges
+        </Title>
+        {isLoading && (
+          <Center py="md">
+            <Loader size="sm" />
+          </Center>
+        )}
+        {!isLoading && open?.length === 0 && (
+          <Text c="dimmed" size="sm">
+            No open challenges 🎉
+          </Text>
+        )}
+        <Stack gap="xs">
+          {open?.map((c) => (
+            <Group key={c.id} justify="space-between" wrap="nowrap">
+              <Text size="sm" style={{ flex: 1 }}>
+                {c.title}
+              </Text>
+              {c.priority !== 'Medium' && (
+                <Badge size="xs" color={priorityColor(c.priority)} variant="light">
+                  {c.priority}
+                </Badge>
+              )}
+            </Group>
+          ))}
+        </Stack>
+      </Card>
+    </UnstyledButton>
   )
 }
 
@@ -439,7 +408,7 @@ export function HomePage() {
           {canSeeReadiness && <NeedsAttentionCard />}
           <MyThings />
           <UpcomingEvents />
-          <CompactCalendar />
+          <MonthGrid />
           <DecisionsCard />
           <ChallengesCard />
         </>

@@ -26,6 +26,7 @@ import { AddDecisionModal } from '../decisions/AddDecisionModal'
 import { useChallengesForEvent } from '../challenges/api'
 import { ChallengeItem } from '../challenges/ChallengeItem'
 import { AddChallengeModal } from '../challenges/AddChallengeModal'
+import { useEventGuestSummary } from '../guests/api'
 import { useOutfitsForEvent } from '../outfits/api'
 import { OutfitItem } from '../outfits/OutfitItem'
 import { AddOutfitModal } from '../outfits/AddOutfitModal'
@@ -65,6 +66,7 @@ export function EventDetailPage() {
   const { data: outfits, isLoading: outfitsLoading, isError: outfitsError } = useOutfitsForEvent(eventId)
   const { data: things, isLoading: thingsLoading, isError: thingsError } = useThingsForEvent(eventId)
   const { data: allVendors, isLoading: vendorsLoading, isError: vendorsError } = useVendors()
+  const { data: guestSummary } = useEventGuestSummary(canManage ? eventId : undefined)
   const { data: menu } = useMenuForEvent(canManage ? eventId : undefined)
   const { data: decorItems, isLoading: decorLoading, isError: decorError } = useDecorForEvent(
     canManage ? eventId : undefined,
@@ -249,6 +251,32 @@ export function EventDetailPage() {
 
       {canManage && (
         <>
+          <Group justify="space-between" mt="md">
+            <Title order={4}>Guests</Title>
+          </Group>
+          {guestSummary && guestSummary.total > 0 ? (
+            <Stack gap={4}>
+              <Text size="sm">
+                {guestSummary.attending} attending
+                {guestSummary.total !== guestSummary.attending && ` of ${guestSummary.total}`}
+              </Text>
+              {guestSummary.incomplete > 0 && (
+                <Text size="sm" c="yellow.7">
+                  {guestSummary.incomplete} attendance {guestSummary.incomplete === 1 ? 'detail' : 'details'} incomplete
+                </Text>
+              )}
+              <UnstyledButton onClick={() => navigate(`/people?tab=guests&event=${event.id}`)}>
+                <Text size="sm" c="accent">
+                  View guest list →
+                </Text>
+              </UnstyledButton>
+            </Stack>
+          ) : (
+            <Text c="dimmed" size="sm">
+              No guests invited to this event yet.
+            </Text>
+          )}
+
           <Group justify="space-between" mt="md">
             <Title order={4}>Menu</Title>
           </Group>

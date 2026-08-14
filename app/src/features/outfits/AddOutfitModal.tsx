@@ -3,6 +3,7 @@ import { Button, Modal, Select, Stack } from '@mantine/core'
 import { useAuth } from '../auth/AuthContext'
 import { usePeople, useEvents } from '../../lib/queries'
 import { useCreateOutfit } from './api'
+import { filterOutfitEligiblePeople } from './eligiblePeople'
 
 export function AddOutfitModal({
   opened,
@@ -24,6 +25,17 @@ export function AddOutfitModal({
   const [personId, setPersonId] = useState<string | null>(defaultPersonId ?? null)
   const [eventId, setEventId] = useState<string | null>(defaultEventId ?? null)
   const [responsiblePersonId, setResponsiblePersonId] = useState<string | null>(null)
+
+  // Outfit planning is scoped to a fixed set of eligible people (spec: UI
+  // restriction only, the People table itself is untouched). If a default
+  // person was passed in from an existing relationship outside that set,
+  // keep them selectable so the existing relationship isn't silently lost.
+  const eligiblePeople = people ? filterOutfitEligiblePeople(people) : []
+  const defaultPerson = defaultPersonId ? people?.find((p) => p.id === defaultPersonId) : undefined
+  const personOptions =
+    defaultPerson && !eligiblePeople.some((p) => p.id === defaultPerson.id)
+      ? [...eligiblePeople, defaultPerson]
+      : eligiblePeople
 
   async function handleSubmit() {
     if (!personId || !eventId || !person) return
@@ -49,7 +61,7 @@ export function AddOutfitModal({
           label="Person"
           required
           searchable
-          data={people?.map((p) => ({ value: p.id, label: p.name })) ?? []}
+          data={personOptions.map((p) => ({ value: p.id, label: p.name }))}
           value={personId}
           onChange={setPersonId}
         />

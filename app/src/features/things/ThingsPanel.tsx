@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { ActionIcon, Affix, Center, Loader, SegmentedControl, Stack, Text, Title } from '@mantine/core'
-import { IconPlus } from '@tabler/icons-react'
+import { Center, Loader, SegmentedControl, Stack, Text, Title } from '@mantine/core'
+import { QuickAddButton } from '../../components/layout/QuickAddButton'
 import { useAuth } from '../auth/AuthContext'
 import { useThings } from './api'
 import { ThingItem } from './ThingItem'
@@ -48,11 +48,7 @@ export function ThingsPanel() {
       {things?.map((t) => <ThingItem key={t.id} thing={t} />)}
 
       {canManage && (
-        <Affix position={{ bottom: 24, right: 24 }}>
-          <ActionIcon size={56} radius="xl" onClick={() => setAddOpen(true)} aria-label="Add thing to take">
-            <IconPlus size={26} />
-          </ActionIcon>
-        </Affix>
+        <QuickAddButton onClick={() => setAddOpen(true)} label="Add thing to take" />
       )}
 
       {canManage && <AddThingModal opened={addOpen} onClose={() => setAddOpen(false)} />}

@@ -4,6 +4,7 @@ import {
   Collapse,
   FileInput,
   Modal,
+  Radio,
   Select,
   Stack,
   Text,
@@ -17,7 +18,7 @@ import { useEvents } from '../../lib/queries'
 import { useVendors } from '../vendors/api'
 import { useExpenses } from '../budget/api'
 import { useGuests } from '../guests/api'
-import { useUploadDocument } from './api'
+import { useAddDocument } from './api'
 
 const MAX_SIZE_MB = 10
 
@@ -43,11 +44,13 @@ export function UploadDocumentModal({
   const { data: vendors } = useVendors()
   const { data: expenses } = useExpenses()
   const { data: guests } = useGuests()
-  const upload = useUploadDocument()
+  const addDocument = useAddDocument()
 
   const hasDefaultContext = !!(defaultEventId || defaultVendorId || defaultExpenseId || defaultGuestId)
 
+  const [storageType, setStorageType] = useState<'upload' | 'external'>('upload')
   const [file, setFile] = useState<File | null>(null)
+  const [externalUrl, setExternalUrl] = useState('')
   const [name, setName] = useState('')
   const [showMore, setShowMore] = useState(hasDefaultContext)
   const [eventId, setEventId] = useState<string | null>(defaultEventId ?? null)
@@ -69,7 +72,9 @@ export function UploadDocumentModal({
   }
 
   function reset() {
+    setStorageType('upload')
     setFile(null)
+    setExternalUrl('')
     setName('')
     setShowMore(hasDefaultContext)
     setEventId(defaultEventId ?? null)
@@ -80,47 +85,78 @@ export function UploadDocumentModal({
     setError(null)
   }
 
+  const canSubmit =
+    !!name.trim() && (storageType === 'upload' ? !!file : /^https?:\/\/.+/i.test(externalUrl.trim()))
+
   async function handleSubmit() {
-    if (!file || !name.trim() || !person) return
+    if (!canSubmit || !person) return
     setError(null)
+    const shared = {
+      weddingId: person.wedding_id,
+      name: name.trim(),
+      eventId,
+      vendorId,
+      expenseId,
+      guestId,
+      taskId: null,
+      notes: notes.trim() || null,
+      uploadedBy: person.id,
+    }
     try {
-      await upload.mutateAsync({
-        file,
-        weddingId: person.wedding_id,
-        name: name.trim(),
-        eventId,
-        vendorId,
-        expenseId,
-        guestId,
-        taskId: null,
-        notes: notes.trim() || null,
-        uploadedBy: person.id,
-      })
+      if (storageType === 'upload') {
+        if (!file) return
+        await addDocument.mutateAsync({ storageType: 'upload', file, ...shared })
+      } else {
+        await addDocument.mutateAsync({ storageType: 'external', externalUrl: externalUrl.trim(), ...shared })
+      }
       reset()
       onClose()
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Upload failed. Try again.')
+      setError(e instanceof Error ? e.message : 'Could not save. Try again.')
     }
   }
 
   return (
-    <Modal opened={opened} onClose={onClose} title="Upload document" centered>
+    <Modal opened={opened} onClose={onClose} title="Add document" centered>
       <Stack gap="sm">
-        <FileInput
-          label="File"
-          placeholder="Choose a file (images or PDF, up to 10MB)"
-          leftSection={<IconUpload size={16} />}
-          required
-          value={file}
-          onChange={handleFile}
-          accept="image/*,.pdf,.doc,.docx"
-        />
         <TextInput
-          label="Name"
+          label="Document name"
           required
           value={name}
           onChange={(e) => setName(e.currentTarget.value)}
         />
+
+        <Radio.Group
+          label="Storage"
+          value={storageType}
+          onChange={(v) => setStorageType(v as 'upload' | 'external')}
+        >
+          <Stack gap={4} mt={4}>
+            <Radio value="upload" label="Upload file" />
+            <Radio value="external" label="External link" />
+          </Stack>
+        </Radio.Group>
+
+        {storageType === 'upload' ? (
+          <FileInput
+            label="File"
+            placeholder="Choose a file (images or PDF, up to 10MB)"
+            leftSection={<IconUpload size={16} />}
+            required
+            value={file}
+            onChange={handleFile}
+            accept="image/*,.pdf,.doc,.docx"
+          />
+        ) : (
+          <TextInput
+            label="External link"
+            placeholder="https://drive.google.com/..."
+            required
+            value={externalUrl}
+            onChange={(e) => setExternalUrl(e.currentTarget.value)}
+          />
+        )}
+
         {error && (
           <Text c="red" size="sm">
             {error}
@@ -178,8 +214,8 @@ export function UploadDocumentModal({
           </Stack>
         </Collapse>
 
-        <Button onClick={handleSubmit} loading={upload.isPending} disabled={!file || !name.trim()} fullWidth mt="xs">
-          Upload
+        <Button onClick={handleSubmit} loading={addDocument.isPending} disabled={!canSubmit} fullWidth mt="xs">
+          Save
         </Button>
       </Stack>
     </Modal>

@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import {
   ActionIcon,
-  Affix,
   Badge,
   Center,
   Group,
@@ -11,9 +10,10 @@ import {
   Title,
   UnstyledButton,
 } from '@mantine/core'
-import { IconFile, IconPlus, IconTrash } from '@tabler/icons-react'
+import { IconExternalLink, IconFile, IconTrash } from '@tabler/icons-react'
 import dayjs from 'dayjs'
-import { useDocuments, useDeleteDocument, getDocumentSignedUrl } from './api'
+import { QuickAddButton } from '../../components/layout/QuickAddButton'
+import { useDocuments, useDeleteDocument, getDocumentSignedUrl, isGoogleDriveUrl } from './api'
 import { UploadDocumentModal } from './UploadDocumentModal'
 import type { DocumentWithRelations } from './api'
 
@@ -23,6 +23,11 @@ function formatSize(bytes: number | null): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
+function sourceLabel(doc: DocumentWithRelations): string {
+  if (doc.storage_type === 'upload') return 'Uploaded file'
+  return isGoogleDriveUrl(doc.external_url ?? '') ? 'Google Drive' : 'External link'
+}
+
 function DocumentRow({ doc }: { doc: DocumentWithRelations }) {
   const deleteDocument = useDeleteDocument()
   const [opening, setOpening] = useState(false)
@@ -30,6 +35,11 @@ function DocumentRow({ doc }: { doc: DocumentWithRelations }) {
   const tags = [doc.event?.name, doc.vendor?.name, doc.expense?.name, doc.guest?.person.name].filter(Boolean)
 
   async function handleOpen() {
+    if (doc.storage_type === 'external') {
+      if (doc.external_url) window.open(doc.external_url, '_blank', 'noopener,noreferrer')
+      return
+    }
+    if (!doc.storage_path) return
     setOpening(true)
     try {
       const url = await getDocumentSignedUrl(doc.storage_path)
@@ -56,14 +66,19 @@ function DocumentRow({ doc }: { doc: DocumentWithRelations }) {
     >
       <UnstyledButton onClick={handleOpen} style={{ flex: 1, minWidth: 0 }}>
         <Group gap="xs" wrap="nowrap">
-          <IconFile size={20} style={{ flexShrink: 0 }} />
+          {doc.storage_type === 'external' ? (
+            <IconExternalLink size={20} style={{ flexShrink: 0 }} />
+          ) : (
+            <IconFile size={20} style={{ flexShrink: 0 }} />
+          )}
           <Stack gap={2} style={{ minWidth: 0 }}>
             <Text size="sm" fw={500} truncate>
               {doc.name} {opening && '…'}
             </Text>
             <Group gap={6} wrap="wrap">
               <Text size="xs" c="dimmed">
-                {dayjs(doc.created_at).format('DD MMM YYYY')} · {formatSize(doc.file_size)}
+                {dayjs(doc.created_at).format('DD MMM YYYY')} · {sourceLabel(doc)}
+                {doc.file_size ? ` · ${formatSize(doc.file_size)}` : ''}
               </Text>
               {tags.map((tag) => (
                 <Badge key={tag} size="xs" color="gray" variant="light">
@@ -109,11 +124,7 @@ export function DocumentsPanel() {
 
       {documents?.map((doc) => <DocumentRow key={doc.id} doc={doc} />)}
 
-      <Affix position={{ bottom: 24, right: 24 }}>
-        <ActionIcon size={56} radius="xl" onClick={() => setUploadOpen(true)} aria-label="Upload document">
-          <IconPlus size={26} />
-        </ActionIcon>
-      </Affix>
+      <QuickAddButton onClick={() => setUploadOpen(true)} label="Add document" />
 
       <UploadDocumentModal opened={uploadOpen} onClose={() => setUploadOpen(false)} />
     </Stack>

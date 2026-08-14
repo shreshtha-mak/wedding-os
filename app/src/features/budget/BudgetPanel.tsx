@@ -1,7 +1,5 @@
 import { useState } from 'react'
 import {
-  ActionIcon,
-  Affix,
   Badge,
   Card,
   Center,
@@ -13,8 +11,8 @@ import {
   Title,
   UnstyledButton,
 } from '@mantine/core'
-import { IconPlus } from '@tabler/icons-react'
 import { useExpenses } from './api'
+import { QuickAddButton } from '../../components/layout/QuickAddButton'
 import { computeBudgetSummary, computeExpenseFinancials } from './finance'
 import { AddExpenseModal } from './AddExpenseModal'
 import { ExpenseDetailModal } from './ExpenseDetailModal'
@@ -119,11 +117,7 @@ export function BudgetPanel() {
         />
       ))}
 
-      <Affix position={{ bottom: 24, right: 24 }}>
-        <ActionIcon size={56} radius="xl" onClick={() => setAddOpen(true)} aria-label="Add expense">
-          <IconPlus size={26} />
-        </ActionIcon>
-      </Affix>
+      <QuickAddButton onClick={() => setAddOpen(true)} label="Add expense" />
 
       <AddExpenseModal opened={addOpen} onClose={() => setAddOpen(false)} />
       <ExpenseDetailModal

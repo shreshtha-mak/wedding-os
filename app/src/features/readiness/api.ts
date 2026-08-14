@@ -34,7 +34,9 @@ export function useWeddingReadinessData(enabled: boolean) {
         supabase.from('guest_event_attendance').select('transportation_status').eq('status', 'Attending'),
         supabase.from('outfits').select('is_ready'),
         supabase.from('things_to_take').select('status'),
-        supabase.from('decor_items').select('status'),
+        // Home Decor (context='home') is its own planning area, never a
+        // wedding/event readiness blocker — only Event Decor counts here.
+        supabase.from('decor_items').select('status').eq('context', 'event'),
         supabase.from('expenses').select('finalised_amount, payments(amount)'),
         supabase.from('timeline_items').select('event_id'),
         supabase.from('challenges').select('id, title, priority, status'),

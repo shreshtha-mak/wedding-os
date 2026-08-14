@@ -1,30 +1,70 @@
 import { useState } from 'react'
-import {
-  ActionIcon,
-  Affix,
-  Center,
-  Loader,
-  SegmentedControl,
-  Stack,
-  Text,
-  Title,
-} from '@mantine/core'
-import { IconPlus } from '@tabler/icons-react'
+import { Center, Group, Loader, SegmentedControl, Stack, Text, Title, UnstyledButton } from '@mantine/core'
+import { IconChevronDown, IconChevronRight } from '@tabler/icons-react'
 import { useOutfits } from './api'
 import { OutfitItem } from './OutfitItem'
 import { AddOutfitModal } from './AddOutfitModal'
+import { QuickAddButton } from '../../components/layout/QuickAddButton'
 import type { OutfitWithRelations } from './api'
 
-function groupBy(outfits: OutfitWithRelations[], key: 'person' | 'event') {
-  const groups = new Map<string, { label: string; items: OutfitWithRelations[] }>()
+interface OutfitGroup {
+  id: string
+  label: string
+  items: OutfitWithRelations[]
+}
+
+function groupBy(outfits: OutfitWithRelations[], key: 'person' | 'event'): OutfitGroup[] {
+  const groups = new Map<string, OutfitGroup>()
   for (const outfit of outfits) {
     const id = outfit[key].id
     const label = outfit[key].name
-    const group = groups.get(id) ?? { label, items: [] }
+    const group = groups.get(id) ?? { id, label, items: [] }
     group.items.push(outfit)
     groups.set(id, group)
   }
   return [...groups.values()].sort((a, b) => a.label.localeCompare(b.label))
+}
+
+// Compact expandable group row — shows only the summary (name + counts)
+// until tapped, per the spec's "show the important summary first, reveal
+// detail only on tap" direction. The whole row is the tap target, not a
+// small chevron icon.
+function OutfitGroupRow({ group, groupMode }: { group: OutfitGroup; groupMode: 'person' | 'event' }) {
+  const [expanded, setExpanded] = useState(false)
+  const readyCount = group.items.filter((o) => o.is_ready).length
+
+  const meta =
+    groupMode === 'person'
+      ? `${group.items.length} event${group.items.length === 1 ? '' : 's'} · ${readyCount}/${group.items.length} ready`
+      : `${group.items.length} ${group.items.length === 1 ? 'person' : 'people'} · ${readyCount}/${group.items.length} ready`
+
+  return (
+    <Stack gap={0}>
+      <UnstyledButton onClick={() => setExpanded((v) => !v)} style={{ width: '100%' }}>
+        <Group
+          justify="space-between"
+          wrap="nowrap"
+          py="sm"
+          style={{ borderBottom: '1px solid var(--mantine-color-default-border)' }}
+        >
+          <div>
+            <Text fw={600}>{group.label}</Text>
+            <Text size="xs" c="dimmed">
+              {meta}
+            </Text>
+          </div>
+          {expanded ? <IconChevronDown size={18} /> : <IconChevronRight size={18} />}
+        </Group>
+      </UnstyledButton>
+      {expanded && (
+        <Stack gap={0} pl="sm">
+          {group.items.map((o) => (
+            <OutfitItem key={o.id} outfit={o} label={groupMode === 'person' ? o.event.name : o.person.name} />
+          ))}
+        </Stack>
+      )}
+    </Stack>
+  )
 }
 
 export function OutfitsPanel() {
@@ -65,24 +105,13 @@ export function OutfitsPanel() {
         </Center>
       )}
 
-      <Stack gap="md">
+      <Stack gap={0}>
         {groups.map((group) => (
-          <Stack key={group.label} gap={2}>
-            <Text size="sm" fw={600} c="dimmed">
-              {group.label}
-            </Text>
-            {group.items.map((o) => (
-              <OutfitItem key={o.id} outfit={o} label={groupMode === 'person' ? o.event.name : o.person.name} />
-            ))}
-          </Stack>
+          <OutfitGroupRow key={group.id} group={group} groupMode={groupMode} />
         ))}
       </Stack>
 
-      <Affix position={{ bottom: 24, right: 24 }}>
-        <ActionIcon size={56} radius="xl" onClick={() => setAddOpen(true)} aria-label="Add outfit">
-          <IconPlus size={26} />
-        </ActionIcon>
-      </Affix>
+      <QuickAddButton onClick={() => setAddOpen(true)} label="Add outfit" />
 
       <AddOutfitModal opened={addOpen} onClose={() => setAddOpen(false)} />
     </Stack>

@@ -42,3 +42,27 @@ body {
 [data-mantine-color-scheme='light'] body {
   background-color: #f8f7f4;
 }
+
+/* Prevent mobile Safari/Chrome from auto-zooming the viewport when a form
+   control receives focus. That zoom is triggered purely by the control's
+   computed font-size being under 16px — Mantine's md inputs render at 14px
+   by default — so bumping to 16px on small viewports is the fix, not any
+   viewport-meta trick (which would also block the user's own pinch-zoom and
+   hurt accessibility). Desktop keeps the normal 14px sizing. */
+@media (max-width: 768px) {
+  input,
+  select,
+  textarea,
+  .mantine-Input-input,
+  .mantine-Select-input,
+  .mantine-MultiSelect-input,
+  .mantine-TextInput-input,
+  .mantine-Textarea-input,
+  .mantine-NumberInput-input,
+  .mantine-DateInput-input,
+  .mantine-TimeInput-input,
+  .mantine-PasswordInput-input,
+  .mantine-Combobox-search {
+    font-size: 16px !important;
+  }
+}

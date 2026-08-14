@@ -1,7 +1,5 @@
 import { useState } from 'react'
 import {
-  ActionIcon,
-  Affix,
   Badge,
   Center,
   Group,
@@ -11,8 +9,9 @@ import {
   Title,
   UnstyledButton,
 } from '@mantine/core'
-import { IconPlus, IconUserPlus } from '@tabler/icons-react'
+import { IconUserPlus } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthContext'
+import { QuickAddButton } from '../../components/layout/QuickAddButton'
 import { usePeopleAdmin } from './api'
 import type { PersonWithAccount } from './api'
 import { AddPersonModal } from './AddPersonModal'
@@ -108,11 +107,7 @@ export function PeoplePage() {
       {people?.map((p) => <PersonRow key={p.id} p={p} isAdmin={isAdmin} onLink={setLinkTarget} />)}
 
       {isAdmin && (
-        <Affix position={{ bottom: 24, right: 24 }}>
-          <ActionIcon size={56} radius="xl" onClick={() => setAddOpen(true)} aria-label="Add person">
-            <IconPlus size={26} />
-          </ActionIcon>
-        </Affix>
+        <QuickAddButton onClick={() => setAddOpen(true)} label="Add person" />
       )}
 
       <AddPersonModal opened={addOpen} onClose={() => setAddOpen(false)} />

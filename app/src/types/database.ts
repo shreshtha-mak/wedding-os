@@ -32,6 +32,9 @@ export type DecorCategory =
   | 'Other'
 export type DecorStatus = 'Concept' | 'Confirmed' | 'In Progress' | 'Done'
 export type AccommodationBookingStatus = 'Requested' | 'Confirmed' | 'Cancelled'
+export type DocumentStorageType = 'upload' | 'external'
+export type DecorContext = 'event' | 'home'
+export type DecorHomeArea = 'house' | 'garden'
 export type DietaryRequirement =
   | 'None'
   | 'Vegetarian'
@@ -1064,6 +1067,8 @@ export interface Database {
           id: string
           wedding_id: string
           event_id: string | null
+          context: DecorContext
+          home_area: DecorHomeArea | null
           name: string
           category: DecorCategory
           vendor_id: string | null
@@ -1078,6 +1083,8 @@ export interface Database {
           id?: string
           wedding_id: string
           event_id?: string | null
+          context?: DecorContext
+          home_area?: DecorHomeArea | null
           name: string
           category?: DecorCategory
           vendor_id?: string | null
@@ -1317,7 +1324,9 @@ export interface Database {
           id: string
           wedding_id: string
           name: string
-          storage_path: string
+          storage_path: string | null
+          storage_type: DocumentStorageType
+          external_url: string | null
           file_type: string | null
           file_size: number | null
           event_id: string | null
@@ -1333,7 +1342,9 @@ export interface Database {
           id?: string
           wedding_id: string
           name: string
-          storage_path: string
+          storage_path?: string | null
+          storage_type?: DocumentStorageType
+          external_url?: string | null
           file_type?: string | null
           file_size?: number | null
           event_id?: string | null

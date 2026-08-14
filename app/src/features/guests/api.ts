@@ -201,6 +201,47 @@ export function useMarkArrived() {
   })
 }
 
+// Used purely for the Accommodation guest filter (arranged vs pending) —
+// mirrors the same assignment lookup the readiness engine already does,
+// no new table or duplicated guest data.
+export function useAccommodationAssignedGuestIds() {
+  return useQuery({
+    queryKey: ['accommodation_assignments', 'guest_ids'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('accommodation_assignments').select('guest_id')
+      if (error) throw error
+      return new Set(data.map((a) => a.guest_id))
+    },
+  })
+}
+
+export interface EventGuestSummary {
+  total: number
+  attending: number
+  incomplete: number
+}
+
+// Event-specific guest list is a view over Guest + Event Attendance, not a
+// separate per-event guest table (spec: "do not duplicate guest records").
+export function useEventGuestSummary(eventId: string | undefined) {
+  return useQuery({
+    queryKey: ['guest_event_attendance', 'summary', eventId],
+    enabled: !!eventId,
+    queryFn: async (): Promise<EventGuestSummary> => {
+      const { data, error } = await supabase
+        .from('guest_event_attendance')
+        .select('status')
+        .eq('event_id', eventId as string)
+      if (error) throw error
+      return {
+        total: data.length,
+        attending: data.filter((a) => a.status === 'Attending').length,
+        incomplete: data.filter((a) => a.status === 'Pending').length,
+      }
+    },
+  })
+}
+
 export function useUpdateAttendance() {
   const queryClient = useQueryClient()
   return useMutation({

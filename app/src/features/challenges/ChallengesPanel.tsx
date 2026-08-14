@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { ActionIcon, Affix, Center, Loader, SegmentedControl, Stack, Text, Title } from '@mantine/core'
-import { IconPlus } from '@tabler/icons-react'
+import { Center, Loader, SegmentedControl, Stack, Text, Title } from '@mantine/core'
+import { QuickAddButton } from '../../components/layout/QuickAddButton'
 import { useAuth } from '../auth/AuthContext'
 import { useChallenges } from './api'
 import { ChallengeItem } from './ChallengeItem'
@@ -53,11 +53,7 @@ export function ChallengesPanel() {
       {challenges?.map((c) => <ChallengeItem key={c.id} challenge={c} />)}
 
       {canManage && (
-        <Affix position={{ bottom: 24, right: 24 }}>
-          <ActionIcon size={56} radius="xl" onClick={() => setAddOpen(true)} aria-label="Add challenge">
-            <IconPlus size={26} />
-          </ActionIcon>
-        </Affix>
+        <QuickAddButton onClick={() => setAddOpen(true)} label="Add challenge" />
       )}
 
       {canManage && <AddChallengeModal opened={addOpen} onClose={() => setAddOpen(false)} />}

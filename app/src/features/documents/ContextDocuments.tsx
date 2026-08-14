@@ -1,19 +1,24 @@
 import { useState } from 'react'
 import { ActionIcon, Center, Group, Loader, Stack, Text, Title, UnstyledButton } from '@mantine/core'
-import { IconFile, IconPlus } from '@tabler/icons-react'
+import { IconExternalLink, IconFile, IconPlus } from '@tabler/icons-react'
 import { useDocumentsFor, getDocumentSignedUrl } from './api'
-import type { ContextFilter } from './api'
+import type { ContextFilter, DocumentWithRelations } from './api'
 import { UploadDocumentModal } from './UploadDocumentModal'
 
 type Props = ContextFilter
 
-function DocRow({ id, name, storagePath }: { id: string; name: string; storagePath: string }) {
+function DocRow({ doc }: { doc: DocumentWithRelations }) {
   const [opening, setOpening] = useState(false)
 
   async function handleOpen() {
+    if (doc.storage_type === 'external') {
+      if (doc.external_url) window.open(doc.external_url, '_blank', 'noopener,noreferrer')
+      return
+    }
+    if (!doc.storage_path) return
     setOpening(true)
     try {
-      const url = await getDocumentSignedUrl(storagePath)
+      const url = await getDocumentSignedUrl(doc.storage_path)
       window.open(url, '_blank', 'noopener,noreferrer')
     } catch {
       // signed URL failed — nothing to open, silently ignore
@@ -23,11 +28,11 @@ function DocRow({ id, name, storagePath }: { id: string; name: string; storagePa
   }
 
   return (
-    <UnstyledButton key={id} onClick={handleOpen}>
+    <UnstyledButton onClick={handleOpen}>
       <Group gap={6} wrap="nowrap">
-        <IconFile size={16} />
+        {doc.storage_type === 'external' ? <IconExternalLink size={16} /> : <IconFile size={16} />}
         <Text size="sm">
-          {name} {opening && '…'}
+          {doc.name} {opening && '…'}
         </Text>
       </Group>
     </UnstyledButton>
@@ -66,7 +71,7 @@ export function ContextDocuments(props: Props) {
           No documents yet.
         </Text>
       )}
-      {documents?.map((d) => <DocRow key={d.id} id={d.id} name={d.name} storagePath={d.storage_path} />)}
+      {documents?.map((d) => <DocRow key={d.id} doc={d} />)}
       <UploadDocumentModal
         opened={uploadOpen}
         onClose={() => setUploadOpen(false)}

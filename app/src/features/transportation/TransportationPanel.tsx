@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { ActionIcon, Affix, Center, Loader, Stack, Text, Title } from '@mantine/core'
-import { IconPlus } from '@tabler/icons-react'
+import { Center, Loader, Stack, Text, Title } from '@mantine/core'
+import { QuickAddButton } from '../../components/layout/QuickAddButton'
 import { useTransportation } from './api'
 import { TransportItem } from './TransportItem'
 import { AddTransportModal } from './AddTransportModal'
@@ -33,11 +33,7 @@ export function TransportationPanel() {
 
       {items?.map((item) => <TransportItem key={item.id} item={item} />)}
 
-      <Affix position={{ bottom: 24, right: 24 }}>
-        <ActionIcon size={56} radius="xl" onClick={() => setAddOpen(true)} aria-label="Add transport request">
-          <IconPlus size={26} />
-        </ActionIcon>
-      </Affix>
+      <QuickAddButton onClick={() => setAddOpen(true)} label="Add transport request" />
 
       <AddTransportModal opened={addOpen} onClose={() => setAddOpen(false)} />
     </Stack>

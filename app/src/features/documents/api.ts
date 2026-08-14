@@ -63,8 +63,7 @@ export function useDocumentsFor(filter: ContextFilter) {
   })
 }
 
-interface UploadDocumentInput {
-  file: File
+interface AddDocumentShared {
   weddingId: string
   name: string
   eventId: string | null
@@ -76,10 +75,34 @@ interface UploadDocumentInput {
   uploadedBy: string
 }
 
-export function useUploadDocument() {
+// A document is either a file we store, or a link to somewhere the family
+// already keeps it (Google Drive, primarily, but any URL) — never both
+// (spec: "the storage source should be explicit"). Google Drive gets no
+// special integration in V1; it's just a URL like any other external link.
+export type AddDocumentInput = (AddDocumentShared & { storageType: 'upload'; file: File }) | (AddDocumentShared & { storageType: 'external'; externalUrl: string })
+
+export function useAddDocument() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (input: UploadDocumentInput) => {
+    mutationFn: async (input: AddDocumentInput) => {
+      if (input.storageType === 'external') {
+        const { error: insertError } = await supabase.from('documents').insert({
+          wedding_id: input.weddingId,
+          name: input.name,
+          storage_type: 'external',
+          external_url: input.externalUrl,
+          event_id: input.eventId,
+          vendor_id: input.vendorId,
+          expense_id: input.expenseId,
+          guest_id: input.guestId,
+          task_id: input.taskId,
+          uploaded_by: input.uploadedBy,
+          notes: input.notes,
+        })
+        if (insertError) throw insertError
+        return
+      }
+
       const safeName = input.file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
       const storagePath = `${input.weddingId}/${crypto.randomUUID()}-${safeName}`
 
@@ -89,6 +112,7 @@ export function useUploadDocument() {
       const { error: insertError } = await supabase.from('documents').insert({
         wedding_id: input.weddingId,
         name: input.name,
+        storage_type: 'upload',
         storage_path: storagePath,
         file_type: input.file.type || null,
         file_size: input.file.size,
@@ -108,7 +132,7 @@ export function useUploadDocument() {
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['documents'] })
-      logActivity('document', null, 'uploaded', `uploaded "${variables.name}"`)
+      logActivity('document', null, 'uploaded', `added "${variables.name}"`)
     },
   })
 }
@@ -116,9 +140,11 @@ export function useUploadDocument() {
 export function useDeleteDocument() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, storagePath }: { id: string; storagePath: string }) => {
-      const { error: storageError } = await supabase.storage.from('documents').remove([storagePath])
-      if (storageError) throw storageError
+    mutationFn: async ({ id, storagePath }: { id: string; storagePath: string | null }) => {
+      if (storagePath) {
+        const { error: storageError } = await supabase.storage.from('documents').remove([storagePath])
+        if (storageError) throw storageError
+      }
       const { error: dbError } = await supabase.from('documents').delete().eq('id', id)
       if (dbError) throw dbError
     },
@@ -134,4 +160,16 @@ export async function getDocumentSignedUrl(storagePath: string): Promise<string>
   const { data, error } = await supabase.storage.from('documents').createSignedUrl(storagePath, 60)
   if (error) throw error
   return data.signedUrl
+}
+
+// Google Drive is the primary expected external source, but any URL is
+// supported — Wedding OS can't enforce Drive's own sharing permissions,
+// it just opens whatever link was provided.
+export function isGoogleDriveUrl(url: string): boolean {
+  try {
+    const host = new URL(url).hostname
+    return host === 'drive.google.com' || host === 'docs.google.com'
+  } catch {
+    return false
+  }
 }
