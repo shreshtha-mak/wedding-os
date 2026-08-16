@@ -33,6 +33,7 @@ export type DecorCategory =
 export type DecorStatus = 'Concept' | 'Confirmed' | 'In Progress' | 'Done'
 export type AccommodationBookingStatus = 'Requested' | 'Confirmed' | 'Cancelled'
 export type DocumentStorageType = 'upload' | 'external'
+export type PersonCategory = 'family' | 'guest'
 export type DecorContext = 'event' | 'home'
 export type DecorHomeArea = 'house' | 'garden'
 export type DietaryRequirement =
@@ -130,6 +131,7 @@ export interface Database {
           profile_photo_url: string | null
           app_access: boolean
           role_id: RoleId | null
+          category: PersonCategory
           active: boolean
           notes: string | null
           created_at: string
@@ -145,6 +147,7 @@ export interface Database {
           profile_photo_url?: string | null
           app_access?: boolean
           role_id?: RoleId | null
+          category?: PersonCategory
           active?: boolean
           notes?: string | null
         }

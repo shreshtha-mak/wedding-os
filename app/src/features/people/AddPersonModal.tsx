@@ -3,6 +3,7 @@ import {
   Button,
   Collapse,
   Modal,
+  SegmentedControl,
   Select,
   Stack,
   Text,
@@ -13,27 +14,27 @@ import {
 import { IconChevronDown, IconChevronUp } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthContext'
 import { useCreatePerson, useRoles } from './api'
-import type { RoleId } from '../../types/database'
+import type { PersonCategory, RoleId } from '../../types/database'
 
 export function AddPersonModal({ opened, onClose }: { opened: boolean; onClose: () => void }) {
   const { person: currentPerson } = useAuth()
   const { data: roles } = useRoles()
   const createPerson = useCreatePerson()
 
+  const [category, setCategory] = useState<PersonCategory>('family')
   const [name, setName] = useState('')
   const [showMore, setShowMore] = useState(false)
   const [relationship, setRelationship] = useState('')
   const [phone, setPhone] = useState('')
-  const [email, setEmail] = useState('')
   const [roleId, setRoleId] = useState<RoleId | null>(null)
   const [notes, setNotes] = useState('')
 
   function reset() {
+    setCategory('family')
     setName('')
     setShowMore(false)
     setRelationship('')
     setPhone('')
-    setEmail('')
     setRoleId(null)
     setNotes('')
   }
@@ -45,8 +46,8 @@ export function AddPersonModal({ opened, onClose }: { opened: boolean; onClose: 
       name: name.trim(),
       relationship: relationship.trim() || null,
       phone: phone.trim() || null,
-      email: email.trim() || null,
       role_id: roleId,
+      category,
       notes: notes.trim() || null,
     })
     reset()
@@ -56,6 +57,21 @@ export function AddPersonModal({ opened, onClose }: { opened: boolean; onClose: 
   return (
     <Modal opened={opened} onClose={onClose} title="Add person" centered>
       <Stack gap="sm">
+        <SegmentedControl
+          value={category}
+          onChange={(v) => setCategory(v as PersonCategory)}
+          data={[
+            { label: 'Family', value: 'family' },
+            { label: 'Guest', value: 'guest' },
+          ]}
+        />
+        {category === 'guest' && (
+          <Text size="xs" c="dimmed">
+            Adds them to the Guests list too — you can set dietary, accommodation and event
+            attendance from there.
+          </Text>
+        )}
+
         <TextInput
           label="Name"
           placeholder="e.g. Nishtha"
@@ -64,15 +80,17 @@ export function AddPersonModal({ opened, onClose }: { opened: boolean; onClose: 
           value={name}
           onChange={(e) => setName(e.currentTarget.value)}
         />
-        <Select
-          label="Role"
-          placeholder="No app access yet"
-          clearable
-          data={roles?.map((r) => ({ value: r.id, label: r.label })) ?? []}
-          value={roleId}
-          onChange={(v) => setRoleId(v as RoleId | null)}
-          description="Only relevant once you link a login for them"
-        />
+        {category === 'family' && (
+          <Select
+            label="Role"
+            placeholder="No app access yet"
+            clearable
+            data={roles?.map((r) => ({ value: r.id, label: r.label })) ?? []}
+            value={roleId}
+            onChange={(v) => setRoleId(v as RoleId | null)}
+            description="Only relevant once you link a login for them"
+          />
+        )}
 
         <UnstyledButton
           onClick={() => setShowMore((v) => !v)}
@@ -97,12 +115,6 @@ export function AddPersonModal({ opened, onClose }: { opened: boolean; onClose: 
               value={phone}
               onChange={(e) => setPhone(e.currentTarget.value)}
             />
-            <TextInput
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.currentTarget.value)}
-            />
             <Textarea
               label="Notes"
               value={notes}
@@ -120,7 +132,7 @@ export function AddPersonModal({ opened, onClose }: { opened: boolean; onClose: 
           fullWidth
           mt="xs"
         >
-          Add person
+          {category === 'guest' ? 'Add guest' : 'Add person'}
         </Button>
       </Stack>
     </Modal>

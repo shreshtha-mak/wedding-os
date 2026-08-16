@@ -68,6 +68,38 @@ export function useCreateTask() {
   })
 }
 
+export function useUpdateTask() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      id,
+      updates,
+      completedBy,
+      becameCompleted,
+    }: {
+      id: string
+      updates: Partial<TaskInsert>
+      completedBy: string
+      becameCompleted: boolean
+      taskName: string
+    }) => {
+      const { error } = await supabase
+        .from('tasks')
+        .update(becameCompleted ? { ...updates, completed_by: completedBy } : updates)
+        .eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] })
+      if (variables.becameCompleted) {
+        logActivity('task', variables.id, 'completed', `completed "${variables.taskName}"`)
+      } else {
+        logActivity('task', variables.id, 'updated', `updated "${variables.taskName}"`)
+      }
+    },
+  })
+}
+
 export function useCompleteTask() {
   const queryClient = useQueryClient()
   return useMutation({

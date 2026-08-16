@@ -70,11 +70,15 @@ export function useCreateGuest() {
       if (input.mode === 'new') {
         const { data: person, error: personError } = await supabase
           .from('people')
+          // A person created from the Guests flow is a guest by
+          // definition — no separate category prompt needed here, unlike
+          // the Family "Add person" flow where it's an explicit choice.
           .insert({
             wedding_id: input.weddingId,
             name: input.name,
             relationship: input.relationship,
             phone: input.phone,
+            category: 'guest',
           })
           .select('id, name')
           .single()
@@ -197,6 +201,63 @@ export function useMarkArrived() {
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['guest_event_attendance', 'event', variables.eventId] })
+    },
+  })
+}
+
+interface FamilyGuestsInput {
+  weddingId: string
+  familyGroup: string
+  names: string[]
+  dietaryRequirements: string[]
+  accommodationRequired: boolean
+  notes: string | null
+  eventIds: string[]
+}
+
+// Bulk "add a family" path — guests are far more often invited as a family
+// unit than one at a time, so this creates one Person + Guest (+ Event
+// Attendance) row per name in a single family_group, instead of making the
+// user repeat the family name for every person individually.
+export function useCreateFamilyGuests() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: FamilyGuestsInput) => {
+      const { data: people, error: peopleError } = await supabase
+        .from('people')
+        .insert(input.names.map((name) => ({ wedding_id: input.weddingId, name, category: 'guest' as const })))
+        .select('id, name')
+      if (peopleError) throw peopleError
+
+      const { data: guests, error: guestsError } = await supabase
+        .from('guests')
+        .insert(
+          people.map((p) => ({
+            wedding_id: input.weddingId,
+            person_id: p.id,
+            family_group: input.familyGroup,
+            dietary_requirements: input.dietaryRequirements,
+            accommodation_required: input.accommodationRequired,
+            notes: input.notes,
+          })),
+        )
+        .select('id')
+      if (guestsError) throw guestsError
+
+      if (input.eventIds.length > 0) {
+        const attendanceRows = guests.flatMap((g) =>
+          input.eventIds.map((eventId) => ({ guest_id: g.id, event_id: eventId })),
+        )
+        const { error: attendanceError } = await supabase.from('guest_event_attendance').insert(attendanceRows)
+        if (attendanceError) throw attendanceError
+      }
+
+      return { count: people.length, familyGroup: input.familyGroup }
+    },
+    onSuccess: ({ count, familyGroup }) => {
+      queryClient.invalidateQueries({ queryKey: ['guests'] })
+      queryClient.invalidateQueries({ queryKey: ['people'] })
+      logActivity('guest', null, 'created', `added ${count} guest${count === 1 ? '' : 's'} to ${familyGroup}`)
     },
   })
 }

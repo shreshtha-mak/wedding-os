@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Badge,
   Center,
   Group,
   Loader,
+  SegmentedControl,
   Stack,
   Text,
   Title,
@@ -50,6 +51,11 @@ function PersonRow({
               {p.relationship}
             </Text>
           )}
+          {p.category === 'guest' && (
+            <Badge size="xs" color="grape" variant="light">
+              Guest
+            </Badge>
+          )}
           {p.role_id && (
             <Badge size="xs" color={ROLE_COLOR[p.role_id]} variant="light">
               {p.role_id}
@@ -75,16 +81,37 @@ function PersonRow({
   )
 }
 
+type CategoryFilter = 'family' | 'guest' | 'all'
+
 export function PeoplePage() {
   const { person } = useAuth()
   const isAdmin = person?.role_id === 'admin'
   const { data: people, isLoading, isError } = usePeopleAdmin()
   const [addOpen, setAddOpen] = useState(false)
   const [linkTarget, setLinkTarget] = useState<PersonWithAccount | null>(null)
+  // Family and Guests are now kept visibly separate here (a person can
+  // still be both — this is just which list they surface in by default),
+  // instead of one undifferentiated roster.
+  const [filter, setFilter] = useState<CategoryFilter>('family')
+
+  const filtered = useMemo(
+    () => (filter === 'all' ? people : people?.filter((p) => p.category === filter)),
+    [people, filter],
+  )
 
   return (
     <Stack p="md" pb={96} gap="md">
       <Title order={3}>Family</Title>
+
+      <SegmentedControl
+        value={filter}
+        onChange={(v) => setFilter(v as CategoryFilter)}
+        data={[
+          { label: 'Family', value: 'family' },
+          { label: 'Guests', value: 'guest' },
+          { label: 'All', value: 'all' },
+        ]}
+      />
 
       {isLoading && (
         <Center py="xl">
@@ -104,7 +131,13 @@ export function PeoplePage() {
         </Center>
       )}
 
-      {people?.map((p) => <PersonRow key={p.id} p={p} isAdmin={isAdmin} onLink={setLinkTarget} />)}
+      {!isLoading && !isError && people && people.length > 0 && filtered?.length === 0 && (
+        <Center py="xl">
+          <Text c="dimmed">{filter === 'guest' ? 'No guests added here yet.' : 'No family members yet.'}</Text>
+        </Center>
+      )}
+
+      {filtered?.map((p) => <PersonRow key={p.id} p={p} isAdmin={isAdmin} onLink={setLinkTarget} />)}
 
       {isAdmin && (
         <QuickAddButton onClick={() => setAddOpen(true)} label="Add person" />

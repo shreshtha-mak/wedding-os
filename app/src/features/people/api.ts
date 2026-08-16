@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { logActivity } from '../activity/api'
-import type { Person, RoleId } from '../../types/database'
+import type { Person, PersonCategory, RoleId } from '../../types/database'
 
 export interface PersonWithAccount extends Person {
   has_login: boolean
@@ -38,26 +38,45 @@ export function useRoles() {
   })
 }
 
+// Deliberately no `email` here — email is a User attribute, only ever set
+// by link_user_account when a login is actually granted, never typed in
+// directly for a Family member or Guest.
 interface CreatePersonInput {
   wedding_id: string
   name: string
   relationship: string | null
   phone: string | null
-  email: string | null
   role_id: RoleId | null
+  category: PersonCategory
   notes: string | null
 }
 
+// Category is a default-list tag, not a stand-in for the guests table —
+// so adding someone here as a Guest also creates their (bare) guests row
+// immediately, rather than just labelling them and leaving them absent
+// from the actual Guests list until someone remembers to add them there
+// separately (spec: "separate the guests from family").
 export function useCreatePerson() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (person: CreatePersonInput) => {
       const { data, error } = await supabase.from('people').insert(person).select('id').single()
       if (error) throw error
+
+      if (person.category === 'guest') {
+        const { error: guestError } = await supabase
+          .from('guests')
+          .insert({ wedding_id: person.wedding_id, person_id: data.id })
+        if (guestError) throw guestError
+      }
+
       return data
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['people'] })
+      if (variables.category === 'guest') {
+        queryClient.invalidateQueries({ queryKey: ['guests'] })
+      }
       logActivity('person', data.id, 'created', `added ${variables.name} to People`)
     },
   })
