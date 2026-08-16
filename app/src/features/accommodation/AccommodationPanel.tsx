@@ -20,6 +20,7 @@ import { AddLocationModal } from './AddLocationModal'
 import { AddRoomModal } from './AddRoomModal'
 import { AddBookingModal } from './AddBookingModal'
 import { AssignGuestModal } from './AssignGuestModal'
+import { AssignAccommodationModal } from './AssignAccommodationModal'
 import type { BookingWithVendor, LocationWithRooms, RoomWithAssignments } from './api'
 
 function bookingStatusColor(status: string): string {
@@ -195,6 +196,7 @@ export function AccommodationPanel() {
   const [addLocationOpen, setAddLocationOpen] = useState(false)
   const [addRoomFor, setAddRoomFor] = useState<string | null>(null)
   const [addBookingFor, setAddBookingFor] = useState<string | null>(null)
+  const [assignTarget, setAssignTarget] = useState<{ id: string; name: string } | null>(null)
 
   const assignedGuestIds = new Set(
     locations?.flatMap((l) => l.rooms.flatMap((r) => r.assignments.map((a) => a.guest.id))),
@@ -210,11 +212,16 @@ export function AccommodationPanel() {
           <Text size="sm" fw={500} c="orange">
             Needs accommodation
           </Text>
+          <Text size="xs" c="dimmed">
+            Tap a name to assign a room directly
+          </Text>
           <Stack gap={2} mt={4}>
             {needsAccommodation.map((g) => (
-              <Text key={g.id} size="sm">
-                {g.person.name}
-              </Text>
+              <UnstyledButton key={g.id} onClick={() => setAssignTarget({ id: g.id, name: g.person.name })}>
+                <Text size="sm" c="accent">
+                  {g.person.name}
+                </Text>
+              </UnstyledButton>
             ))}
           </Stack>
         </Card>
@@ -261,6 +268,12 @@ export function AccommodationPanel() {
       {addBookingFor && (
         <AddBookingModal locationId={addBookingFor} opened={!!addBookingFor} onClose={() => setAddBookingFor(null)} />
       )}
+      <AssignAccommodationModal
+        guest={assignTarget}
+        locations={locations ?? []}
+        opened={!!assignTarget}
+        onClose={() => setAssignTarget(null)}
+      />
     </Stack>
   )
 }

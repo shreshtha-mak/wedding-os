@@ -12,7 +12,7 @@ import {
   Title,
   UnstyledButton,
 } from '@mantine/core'
-import { IconArrowLeft, IconFilter, IconSearch, IconX } from '@tabler/icons-react'
+import { IconArrowLeft, IconChevronDown, IconChevronRight, IconFilter, IconSearch, IconX } from '@tabler/icons-react'
 import { useAuth } from '../auth/AuthContext'
 import { useAccommodationAssignedGuestIds, useGuests } from './api'
 import { GuestItem } from './GuestItem'
@@ -21,6 +21,72 @@ import { GuestFilterModal } from './GuestFilterModal'
 import { QuickAddButton } from '../../components/layout/QuickAddButton'
 import { activeFilterCount, EMPTY_GUEST_FILTERS, matchesGuestFilters } from './filters'
 import type { GuestFilters } from './filters'
+import type { GuestWithDetails } from './api'
+
+const UNGROUPED_KEY = '__ungrouped__'
+
+interface GuestGroup {
+  key: string
+  label: string
+  guests: GuestWithDetails[]
+}
+
+// The master guest list stays one list — grouping by family here is a
+// display/filter layer over it, not a separate per-family guest table.
+function groupByFamily(guests: GuestWithDetails[]): GuestGroup[] {
+  const groups = new Map<string, GuestGroup>()
+  for (const g of guests) {
+    const trimmed = g.family_group?.trim()
+    const key = trimmed || UNGROUPED_KEY
+    const label = trimmed || 'No family group'
+    const group = groups.get(key) ?? { key, label, guests: [] }
+    group.guests.push(g)
+    groups.set(key, group)
+  }
+  const sorted = [...groups.values()].sort((a, b) => a.label.localeCompare(b.label))
+  const ungroupedIndex = sorted.findIndex((g) => g.key === UNGROUPED_KEY)
+  if (ungroupedIndex !== -1) {
+    const [ungrouped] = sorted.splice(ungroupedIndex, 1)
+    sorted.push(ungrouped)
+  }
+  return sorted
+}
+
+// Compact expandable family-group row — same tap-to-expand pattern as
+// Outfits/Decor. Doubles as a browsing filter: tap a family to see just
+// its members instead of scrolling the full list.
+function GuestGroupRow({ group }: { group: GuestGroup }) {
+  const [expanded, setExpanded] = useState(false)
+  const attendingCount = group.guests.filter((g) => g.attendance.some((a) => a.status === 'Attending')).length
+
+  return (
+    <Stack gap={0}>
+      <UnstyledButton onClick={() => setExpanded((v) => !v)} style={{ width: '100%' }}>
+        <Group
+          justify="space-between"
+          wrap="nowrap"
+          py="sm"
+          style={{ borderBottom: '1px solid var(--mantine-color-default-border)' }}
+        >
+          <div>
+            <Text fw={600}>{group.label}</Text>
+            <Text size="xs" c="dimmed">
+              {group.guests.length} guest{group.guests.length === 1 ? '' : 's'} · {attendingCount} attending
+            </Text>
+          </div>
+          {expanded ? <IconChevronDown size={18} /> : <IconChevronRight size={18} />}
+        </Group>
+      </UnstyledButton>
+      {expanded && (
+        <Stack gap={0} pl="sm">
+          {group.guests.map((g) => (
+            <GuestItem key={g.id} guest={g} />
+          ))}
+        </Stack>
+      )}
+    </Stack>
+  )
+}
 
 // Human-readable labels for the active-filter chip row.
 function filterChips(filters: GuestFilters, eventName: string | null): { key: keyof GuestFilters; label: string }[] {
@@ -74,6 +140,8 @@ export function GuestsPanel({
       .filter((g) => matchesGuestFilters(g, filters, assigned))
       .filter((g) => !q || g.person.name.toLowerCase().includes(q))
   }, [guests, filters, assignedGuestIds, search])
+
+  const groups = useMemo(() => groupByFamily(filtered), [filtered])
 
   const chips = filterChips(filters, scopedEventName ?? null)
   // In scoped mode the event chip represents the page context, not a
@@ -160,7 +228,11 @@ export function GuestsPanel({
         </Center>
       )}
 
-      {filtered.map((g) => <GuestItem key={g.id} guest={g} />)}
+      <Stack gap={0}>
+        {groups.map((group) => (
+          <GuestGroupRow key={group.key} group={group} />
+        ))}
+      </Stack>
 
       {canManage && <QuickAddButton onClick={() => setAddOpen(true)} label="Add guest" />}
 

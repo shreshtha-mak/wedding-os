@@ -13,7 +13,7 @@ import {
   Textarea,
   TextInput,
 } from '@mantine/core'
-import { useUpdateAttendance, useUpdateGuest } from './api'
+import { useDeleteGuest, useUpdateAttendance, useUpdateGuest } from './api'
 import type { GuestWithDetails } from './api'
 import type { AttendanceStatus, DietaryRequirement, TransportRequirement } from '../../types/database'
 import { ContextDocuments } from '../documents/ContextDocuments'
@@ -122,6 +122,7 @@ export function GuestDetailModal({
   onClose: () => void
 }) {
   const updateGuest = useUpdateGuest()
+  const deleteGuest = useDeleteGuest()
   const [familyGroup, setFamilyGroup] = useState('')
   const [dietary, setDietary] = useState<string[]>([])
   const [accommodationRequired, setAccommodationRequired] = useState(false)
@@ -148,6 +149,13 @@ export function GuestDetailModal({
       accommodationRequired,
       notes: notes.trim() || null,
     })
+  }
+
+  function handleDelete() {
+    if (!guest) return
+    if (window.confirm(`Remove ${guest.person.name} from Guests? This can't be undone — they'll stay in People.`)) {
+      deleteGuest.mutate({ id: guest.id, guestName: guest.person.name }, { onSuccess: onClose })
+    }
   }
 
   return (
@@ -194,6 +202,17 @@ export function GuestDetailModal({
 
         <Divider my={4} />
         <ContextDocuments guestId={guest.id} />
+
+        <Divider my={4} />
+        <Button
+          onClick={handleDelete}
+          loading={deleteGuest.isPending}
+          color="red"
+          variant="subtle"
+          fullWidth
+        >
+          Delete guest
+        </Button>
       </Stack>
     </Modal>
   )

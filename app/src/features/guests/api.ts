@@ -127,6 +127,25 @@ export function useCreateGuest() {
   })
 }
 
+// Removes the guest entry (and, via FK cascade, their event attendance and
+// any accommodation room assignment) — fixes a double-entry in the guest
+// list without touching the underlying Person record, which may still be
+// referenced elsewhere (e.g. a genuine family member who was also, by
+// mistake, separately added as a guest).
+export function useDeleteGuest() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id }: { id: string; guestName: string }) => {
+      const { error } = await supabase.from('guests').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['guests'] })
+      logActivity('guest', null, 'deleted', `removed ${variables.guestName} from Guests`)
+    },
+  })
+}
+
 export function useUpdateGuest() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -252,7 +271,7 @@ export function useCreateFamilyGuests() {
         if (attendanceError) throw attendanceError
       }
 
-      return { count: people.length, familyGroup: input.familyGroup }
+      return { count: people.length, familyGroup: input.familyGroup, guestIds: guests.map((g) => g.id) }
     },
     onSuccess: ({ count, familyGroup }) => {
       queryClient.invalidateQueries({ queryKey: ['guests'] })

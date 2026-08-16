@@ -6,6 +6,46 @@ import type { OutfitComponentStatus } from '../../types/database'
 
 const STATUSES: OutfitComponentStatus[] = ['Idea', 'To Buy', 'In Making', 'In Alteration', 'Ready']
 
+// Name + status side by side for one outfit component (the outfit itself,
+// shoes, jewellery, or accessories) — previously only the status showed,
+// with no way to say what the item actually is (e.g. "Red lehenga from
+// XYZ" vs. just "Ready").
+function ComponentField({
+  label,
+  placeholder,
+  name,
+  onNameChange,
+  status,
+  onStatusChange,
+}: {
+  label: string
+  placeholder: string
+  name: string
+  onNameChange: (value: string) => void
+  status: OutfitComponentStatus
+  onStatusChange: (value: OutfitComponentStatus) => void
+}) {
+  return (
+    <Group gap={6} wrap="nowrap" align="flex-end">
+      <TextInput
+        label={label}
+        placeholder={placeholder}
+        value={name}
+        onChange={(e) => onNameChange(e.currentTarget.value)}
+        style={{ flex: 1 }}
+      />
+      <Select
+        label="Status"
+        data={STATUSES}
+        value={status}
+        onChange={(v) => onStatusChange((v as OutfitComponentStatus) ?? status)}
+        allowDeselect={false}
+        w={140}
+      />
+    </Group>
+  )
+}
+
 export function OutfitDetailModal({
   outfit,
   opened,
@@ -18,9 +58,13 @@ export function OutfitDetailModal({
   const updateOutfit = useUpdateOutfit()
 
   const [editedId, setEditedId] = useState<string | null>(null)
+  const [outfitName, setOutfitName] = useState('')
   const [outfitStatus, setOutfitStatus] = useState<OutfitComponentStatus>('Idea')
+  const [shoesName, setShoesName] = useState('')
   const [shoesStatus, setShoesStatus] = useState<OutfitComponentStatus>('Idea')
+  const [jewelleryName, setJewelleryName] = useState('')
   const [jewelleryStatus, setJewelleryStatus] = useState<OutfitComponentStatus>('Idea')
+  const [accessoriesName, setAccessoriesName] = useState('')
   const [accessoriesStatus, setAccessoriesStatus] = useState<OutfitComponentStatus>('Idea')
   const [description, setDescription] = useState('')
   const [vendorTailor, setVendorTailor] = useState('')
@@ -29,9 +73,13 @@ export function OutfitDetailModal({
 
   if (outfit && outfit.id !== editedId) {
     setEditedId(outfit.id)
+    setOutfitName(outfit.outfit_name ?? '')
     setOutfitStatus(outfit.outfit_status)
+    setShoesName(outfit.shoes_name ?? '')
     setShoesStatus(outfit.shoes_status)
+    setJewelleryName(outfit.jewellery_name ?? '')
     setJewelleryStatus(outfit.jewellery_status)
+    setAccessoriesName(outfit.accessories_name ?? '')
     setAccessoriesStatus(outfit.accessories_status)
     setDescription(outfit.description ?? '')
     setVendorTailor(outfit.vendor_tailor ?? '')
@@ -49,9 +97,13 @@ export function OutfitDetailModal({
     await updateOutfit.mutateAsync({
       id: outfit.id,
       updates: {
+        outfit_name: outfitName.trim() || null,
         outfit_status: outfitStatus,
+        shoes_name: shoesName.trim() || null,
         shoes_status: shoesStatus,
+        jewellery_name: jewelleryName.trim() || null,
         jewellery_status: jewelleryStatus,
+        accessories_name: accessoriesName.trim() || null,
         accessories_status: accessoriesStatus,
         description: description.trim() || null,
         vendor_tailor: vendorTailor.trim() || null,
@@ -79,38 +131,38 @@ export function OutfitDetailModal({
             Ready
           </Badge>
         )}
-        <Group grow>
-          <Select
-            label="Outfit"
-            data={STATUSES}
-            value={outfitStatus}
-            onChange={(v) => setOutfitStatus((v as OutfitComponentStatus) ?? outfitStatus)}
-            allowDeselect={false}
-          />
-          <Select
-            label="Shoes"
-            data={STATUSES}
-            value={shoesStatus}
-            onChange={(v) => setShoesStatus((v as OutfitComponentStatus) ?? shoesStatus)}
-            allowDeselect={false}
-          />
-        </Group>
-        <Group grow>
-          <Select
-            label="Jewellery"
-            data={STATUSES}
-            value={jewelleryStatus}
-            onChange={(v) => setJewelleryStatus((v as OutfitComponentStatus) ?? jewelleryStatus)}
-            allowDeselect={false}
-          />
-          <Select
-            label="Accessories"
-            data={STATUSES}
-            value={accessoriesStatus}
-            onChange={(v) => setAccessoriesStatus((v as OutfitComponentStatus) ?? accessoriesStatus)}
-            allowDeselect={false}
-          />
-        </Group>
+        <ComponentField
+          label="Outfit"
+          placeholder="e.g. Red lehenga from XYZ"
+          name={outfitName}
+          onNameChange={setOutfitName}
+          status={outfitStatus}
+          onStatusChange={setOutfitStatus}
+        />
+        <ComponentField
+          label="Shoes"
+          placeholder="e.g. Gold heels"
+          name={shoesName}
+          onNameChange={setShoesName}
+          status={shoesStatus}
+          onStatusChange={setShoesStatus}
+        />
+        <ComponentField
+          label="Jewellery"
+          placeholder="e.g. Kundan necklace set"
+          name={jewelleryName}
+          onNameChange={setJewelleryName}
+          status={jewelleryStatus}
+          onStatusChange={setJewelleryStatus}
+        />
+        <ComponentField
+          label="Accessories"
+          placeholder="e.g. Clutch, dupatta pins"
+          name={accessoriesName}
+          onNameChange={setAccessoriesName}
+          status={accessoriesStatus}
+          onStatusChange={setAccessoriesStatus}
+        />
         <Textarea
           label="Description"
           value={description}

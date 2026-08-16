@@ -814,9 +814,13 @@ export interface Database {
           person_id: string
           event_id: string
           description: string | null
+          outfit_name: string | null
           outfit_status: OutfitComponentStatus
+          shoes_name: string | null
           shoes_status: OutfitComponentStatus
+          jewellery_name: string | null
           jewellery_status: OutfitComponentStatus
+          accessories_name: string | null
           accessories_status: OutfitComponentStatus
           is_ready: boolean
           vendor_tailor: string | null
@@ -833,9 +837,13 @@ export interface Database {
           person_id: string
           event_id: string
           description?: string | null
+          outfit_name?: string | null
           outfit_status?: OutfitComponentStatus
+          shoes_name?: string | null
           shoes_status?: OutfitComponentStatus
+          jewellery_name?: string | null
           jewellery_status?: OutfitComponentStatus
+          accessories_name?: string | null
           accessories_status?: OutfitComponentStatus
           vendor_tailor?: string | null
           cost?: number | null

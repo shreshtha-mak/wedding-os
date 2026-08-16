@@ -17,6 +17,7 @@ import dayjs from 'dayjs'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import { useEvents } from '../../lib/queries'
+import { CollapsibleSection } from '../../components/layout/CollapsibleSection'
 import { useTasksForEvent } from '../tasks/api'
 import { TaskItem } from '../tasks/TaskItem'
 import { AddTaskModal } from '../tasks/AddTaskModal'
@@ -143,111 +144,123 @@ export function EventDetailPage() {
         )}
       </Card>
 
-      <Group justify="space-between">
-        <Title order={4}>Tasks</Title>
-        {canManage && (
-          <ActionIcon variant="subtle" onClick={() => setAddTaskOpen(true)} aria-label="Add task">
+      <CollapsibleSection
+        title="Tasks"
+        summary={tasks && tasks.length > 0 ? `(${tasks.length})` : undefined}
+        action={
+          canManage && (
+            <ActionIcon variant="subtle" onClick={() => setAddTaskOpen(true)} aria-label="Add task">
+              <IconPlus size={20} />
+            </ActionIcon>
+          )
+        }
+      >
+        {tasksLoading && (
+          <Center py="md">
+            <Loader size="sm" />
+          </Center>
+        )}
+        {!tasksLoading && tasks?.length === 0 && (
+          <Text c="dimmed" size="sm">
+            No tasks for this event yet.
+          </Text>
+        )}
+        {tasks?.map((task) => <TaskItem key={task.id} task={task} />)}
+      </CollapsibleSection>
+
+      <CollapsibleSection
+        title="Decisions"
+        summary={decisions && decisions.length > 0 ? `(${decisions.length})` : undefined}
+        action={
+          canManage && (
+            <ActionIcon variant="subtle" onClick={() => setAddDecisionOpen(true)} aria-label="Add decision">
+              <IconPlus size={20} />
+            </ActionIcon>
+          )
+        }
+      >
+        {decisionsLoading && (
+          <Center py="md">
+            <Loader size="sm" />
+          </Center>
+        )}
+        {!decisionsLoading && decisions?.length === 0 && (
+          <Text c="dimmed" size="sm">
+            No decisions for this event yet.
+          </Text>
+        )}
+        {decisions?.map((d) => <DecisionItem key={d.id} decision={d} />)}
+      </CollapsibleSection>
+
+      <CollapsibleSection
+        title="Challenges"
+        summary={challenges && challenges.length > 0 ? `(${challenges.length})` : undefined}
+        action={
+          canManage && (
+            <ActionIcon variant="subtle" onClick={() => setAddChallengeOpen(true)} aria-label="Add challenge">
+              <IconPlus size={20} />
+            </ActionIcon>
+          )
+        }
+      >
+        {challengesLoading && (
+          <Center py="md">
+            <Loader size="sm" />
+          </Center>
+        )}
+        {!challengesLoading && challenges?.length === 0 && (
+          <Text c="dimmed" size="sm">
+            No open challenges 🎉
+          </Text>
+        )}
+        {challenges?.map((c) => <ChallengeItem key={c.id} challenge={c} />)}
+      </CollapsibleSection>
+
+      <CollapsibleSection
+        title="Outfits"
+        summary={outfits && outfits.length > 0 ? `(${outfits.filter((o) => o.is_ready).length}/${outfits.length} ready)` : undefined}
+        action={
+          <ActionIcon variant="subtle" onClick={() => setAddOutfitOpen(true)} aria-label="Add outfit">
             <IconPlus size={20} />
           </ActionIcon>
+        }
+      >
+        {outfitsLoading && (
+          <Center py="md">
+            <Loader size="sm" />
+          </Center>
         )}
-      </Group>
-      {tasksLoading && (
-        <Center py="md">
-          <Loader size="sm" />
-        </Center>
-      )}
-      {!tasksLoading && tasks?.length === 0 && (
-        <Text c="dimmed" size="sm">
-          No tasks for this event yet.
-        </Text>
-      )}
-      {tasks?.map((task) => <TaskItem key={task.id} task={task} />)}
-
-      <Group justify="space-between" mt="md">
-        <Title order={4}>Decisions</Title>
-        {canManage && (
-          <ActionIcon variant="subtle" onClick={() => setAddDecisionOpen(true)} aria-label="Add decision">
-            <IconPlus size={20} />
-          </ActionIcon>
+        {!outfitsLoading && outfits?.length === 0 && (
+          <Text c="dimmed" size="sm">
+            No outfits tracked for this event yet.
+          </Text>
         )}
-      </Group>
-      {decisionsLoading && (
-        <Center py="md">
-          <Loader size="sm" />
-        </Center>
-      )}
-      {!decisionsLoading && decisions?.length === 0 && (
-        <Text c="dimmed" size="sm">
-          No decisions for this event yet.
-        </Text>
-      )}
-      {decisions?.map((d) => <DecisionItem key={d.id} decision={d} />)}
+        {outfits?.map((o) => <OutfitItem key={o.id} outfit={o} label={o.person.name} />)}
+      </CollapsibleSection>
 
-      <Group justify="space-between" mt="md">
-        <Title order={4}>Challenges</Title>
-        {canManage && (
-          <ActionIcon variant="subtle" onClick={() => setAddChallengeOpen(true)} aria-label="Add challenge">
-            <IconPlus size={20} />
-          </ActionIcon>
+      <CollapsibleSection
+        title="Things to Take"
+        summary={things && things.length > 0 ? `(${things.length})` : undefined}
+        action={
+          canManage && (
+            <ActionIcon variant="subtle" onClick={() => setAddThingOpen(true)} aria-label="Add thing to take">
+              <IconPlus size={20} />
+            </ActionIcon>
+          )
+        }
+      >
+        {thingsLoading && (
+          <Center py="md">
+            <Loader size="sm" />
+          </Center>
         )}
-      </Group>
-      {challengesLoading && (
-        <Center py="md">
-          <Loader size="sm" />
-        </Center>
-      )}
-      {!challengesLoading && challenges?.length === 0 && (
-        <Text c="dimmed" size="sm">
-          No open challenges 🎉
-        </Text>
-      )}
-      {challenges?.map((c) => <ChallengeItem key={c.id} challenge={c} />)}
-
-      <Group justify="space-between" mt="md">
-        <Title order={4}>
-          Outfits
-          {outfits && outfits.length > 0 && (
-            <Text span size="sm" c="dimmed">
-              {' '}
-              ({outfits.filter((o) => o.is_ready).length}/{outfits.length} ready)
-            </Text>
-          )}
-        </Title>
-        <ActionIcon variant="subtle" onClick={() => setAddOutfitOpen(true)} aria-label="Add outfit">
-          <IconPlus size={20} />
-        </ActionIcon>
-      </Group>
-      {outfitsLoading && (
-        <Center py="md">
-          <Loader size="sm" />
-        </Center>
-      )}
-      {!outfitsLoading && outfits?.length === 0 && (
-        <Text c="dimmed" size="sm">
-          No outfits tracked for this event yet.
-        </Text>
-      )}
-      {outfits?.map((o) => <OutfitItem key={o.id} outfit={o} label={o.person.name} />)}
-
-      <Group justify="space-between" mt="md">
-        <Title order={4}>Things to Take</Title>
-        {canManage && (
-          <ActionIcon variant="subtle" onClick={() => setAddThingOpen(true)} aria-label="Add thing to take">
-            <IconPlus size={20} />
-          </ActionIcon>
+        {!thingsLoading && things?.length === 0 && (
+          <Text c="dimmed" size="sm">
+            Nothing on the list for this event yet.
+          </Text>
         )}
-      </Group>
-      {thingsLoading && (
-        <Center py="md">
-          <Loader size="sm" />
-        </Center>
-      )}
-      {!thingsLoading && things?.length === 0 && (
-        <Text c="dimmed" size="sm">
-          Nothing on the list for this event yet.
-        </Text>
-      )}
-      {things?.map((t) => <ThingItem key={t.id} thing={t} />)}
+        {things?.map((t) => <ThingItem key={t.id} thing={t} />)}
+      </CollapsibleSection>
 
       {canManage && (
         <>
@@ -289,100 +302,112 @@ export function EventDetailPage() {
             </Badge>
           </UnstyledButton>
 
-          <Group justify="space-between" mt="md">
-            <Title order={4}>Vendors</Title>
-            <ActionIcon variant="subtle" onClick={() => setAddVendorOpen(true)} aria-label="Assign vendor">
-              <IconPlus size={20} />
-            </ActionIcon>
-          </Group>
-          {vendorsLoading && (
-            <Center py="md">
-              <Loader size="sm" />
-            </Center>
-          )}
-          {!vendorsLoading && eventVendorAssignments?.length === 0 && (
-            <Text c="dimmed" size="sm">
-              No vendors assigned to this event yet.
-            </Text>
-          )}
-          {eventVendorAssignments?.map((a) => (
-            <Group key={a.id} justify="space-between" wrap="nowrap" py={6}>
-              <Text size="sm">
-                {a.vendorName}
-                {a.responsibility && (
-                  <Text span size="xs" c="dimmed">
-                    {' '}
-                    — {a.responsibility}
-                  </Text>
-                )}
+          <CollapsibleSection
+            title="Vendors"
+            summary={eventVendorAssignments && eventVendorAssignments.length > 0 ? `(${eventVendorAssignments.length})` : undefined}
+            action={
+              <ActionIcon variant="subtle" onClick={() => setAddVendorOpen(true)} aria-label="Assign vendor">
+                <IconPlus size={20} />
+              </ActionIcon>
+            }
+          >
+            {vendorsLoading && (
+              <Center py="md">
+                <Loader size="sm" />
+              </Center>
+            )}
+            {!vendorsLoading && eventVendorAssignments?.length === 0 && (
+              <Text c="dimmed" size="sm">
+                No vendors assigned to this event yet.
               </Text>
-              <Badge size="xs" color={a.status === 'Completed' ? 'green' : a.status === 'Confirmed' ? 'blue' : 'gray'} variant="light">
-                {a.status}
-              </Badge>
-            </Group>
-          ))}
+            )}
+            {eventVendorAssignments?.map((a) => (
+              <Group key={a.id} justify="space-between" wrap="nowrap" py={6}>
+                <Text size="sm">
+                  {a.vendorName}
+                  {a.responsibility && (
+                    <Text span size="xs" c="dimmed">
+                      {' '}
+                      — {a.responsibility}
+                    </Text>
+                  )}
+                </Text>
+                <Badge size="xs" color={a.status === 'Completed' ? 'green' : a.status === 'Confirmed' ? 'blue' : 'gray'} variant="light">
+                  {a.status}
+                </Badge>
+              </Group>
+            ))}
+          </CollapsibleSection>
 
-          <Group justify="space-between" mt="md">
-            <Title order={4}>Decor</Title>
-            <ActionIcon variant="subtle" onClick={() => setAddDecorOpen(true)} aria-label="Add decor item">
-              <IconPlus size={20} />
-            </ActionIcon>
-          </Group>
-          {decorLoading && (
-            <Center py="md">
-              <Loader size="sm" />
-            </Center>
-          )}
-          {!decorLoading && decorItems?.length === 0 && (
-            <Text c="dimmed" size="sm">
-              No decor items for this event yet.
-            </Text>
-          )}
-          {decorItems?.map((item) => <DecorItemRow key={item.id} item={item} />)}
+          <CollapsibleSection
+            title="Decor"
+            summary={decorItems && decorItems.length > 0 ? `(${decorItems.length})` : undefined}
+            action={
+              <ActionIcon variant="subtle" onClick={() => setAddDecorOpen(true)} aria-label="Add decor item">
+                <IconPlus size={20} />
+              </ActionIcon>
+            }
+          >
+            {decorLoading && (
+              <Center py="md">
+                <Loader size="sm" />
+              </Center>
+            )}
+            {!decorLoading && decorItems?.length === 0 && (
+              <Text c="dimmed" size="sm">
+                No decor items for this event yet.
+              </Text>
+            )}
+            {decorItems?.map((item) => <DecorItemRow key={item.id} item={item} />)}
+          </CollapsibleSection>
         </>
       )}
 
-      <Group justify="space-between" mt="md">
-        <Title order={4}>Timeline</Title>
-        {canManage && (
-          <ActionIcon variant="subtle" onClick={() => setAddTimelineOpen(true)} aria-label="Add timeline item">
-            <IconPlus size={20} />
-          </ActionIcon>
+      <CollapsibleSection
+        title="Timeline"
+        summary={timeline && timeline.length > 0 ? `(${timeline.length})` : undefined}
+        action={
+          canManage && (
+            <ActionIcon variant="subtle" onClick={() => setAddTimelineOpen(true)} aria-label="Add timeline item">
+              <IconPlus size={20} />
+            </ActionIcon>
+          )
+        }
+      >
+        {timelineLoading && (
+          <Center py="md">
+            <Loader size="sm" />
+          </Center>
         )}
-      </Group>
-      {timelineLoading && (
-        <Center py="md">
-          <Loader size="sm" />
-        </Center>
-      )}
-      {!timelineLoading && timeline?.length === 0 && (
-        <Text c="dimmed" size="sm">
-          No timeline items yet.
-        </Text>
-      )}
-      <Stack gap={4}>
-        {timeline?.map((item) => (
-          <Group
-            key={item.id}
-            wrap="nowrap"
-            gap="sm"
-            py={6}
-            style={{ borderBottom: '1px solid var(--mantine-color-default-border)' }}
-          >
-            <Text size="sm" c="dimmed" w={72}>
-              {formatTime(item.start_time) ?? '—'}
-            </Text>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <Text size="sm">{item.activity}</Text>
-              {(item.location || item.responsible_person) && (
-                <Text size="xs" c="dimmed">
-                  {[item.location, item.responsible_person?.name].filter(Boolean).join(' · ')}
-                </Text>
-              )}
-            </div>
-          </Group>
-        ))}
-      </Stack>
+        {!timelineLoading && timeline?.length === 0 && (
+          <Text c="dimmed" size="sm">
+            No timeline items yet.
+          </Text>
+        )}
+        <Stack gap={4}>
+          {timeline?.map((item) => (
+            <Group
+              key={item.id}
+              wrap="nowrap"
+              gap="sm"
+              py={6}
+              style={{ borderBottom: '1px solid var(--mantine-color-default-border)' }}
+            >
+              <Text size="sm" c="dimmed" w={72}>
+                {formatTime(item.start_time) ?? '—'}
+              </Text>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <Text size="sm">{item.activity}</Text>
+                {(item.location || item.responsible_person) && (
+                  <Text size="xs" c="dimmed">
+                    {[item.location, item.responsible_person?.name].filter(Boolean).join(' · ')}
+                  </Text>
+                )}
+              </div>
+            </Group>
+          ))}
+        </Stack>
+      </CollapsibleSection>
 
       <ContextDocuments eventId={event.id} />
 
